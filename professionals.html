@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professionnels — ProConnect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .filters-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-chip {
+      padding: 8px 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .filter-chip.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .filter-chip:hover {
+      border-color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo" onclick="location.href='index.html'">ProConnect</div>
+    <div class="nav-links" id="navLinks">
+      <a href="login.html" class="nav-link">Connexion</a>
+      <a href="register.html" class="btn btn-primary">S'inscrire</a>
+    </div>
+  </nav>
+
+  <main class="main">
+    <h1 style="font-size: 36px; font-weight: 800; margin-bottom: 8px;" id="pageTitle">
+      Tous les pros
+    </h1>
+    <p style="color: var(--text-secondary); margin-bottom: 24px;" id="resultCount">
+      Chargement...
+    </p>
+
+    <div class="filters-bar">
+      <span style="font-weight: 600; margin-right: 8px;">Filtrer :</span>
+      <div class="filter-chip active" data-filter="all" onclick="setFilter('all')">Tous</div>
+      <div class="filter-chip" data-filter="Plomberie" onclick="setFilter('Plomberie')">Plomberie</div>
+      <div class="filter-chip" data-filter="Électricité" onclick="setFilter('Électricité')">Électricité</div>
+      <div class="filter-chip" data-filter="Ménage" onclick="setFilter('Ménage')">Ménage</div>
+      <div class="filter-chip" data-filter="Jardinage" onclick="setFilter('Jardinage')">Jardinage</div>
+      <div class="filter-chip" data-filter="Peinture" onclick="setFilter('Peinture')">Peinture</div>
+      <div class="filter-chip" data-filter="Informatique" onclick="setFilter('Informatique')">Informatique</div>
+    </div>
+
+    <div class="pros-grid" id="prosGrid">
+      <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted)">
+        Chargement...
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script>
+    let allPros = [];
+    let currentFilter = 'all';
+
+    async function loadNavbar() {
+      const user = await getCurrentUser();
+      if (user) {
+        const path = user.role === 'professional' ? 'pro-dashboard.html' : 'profile.html';
+        document.getElementById('navLinks').innerHTML = `
+          <a href="${path}" class="nav-link"><i class="fa-solid fa-user"></i> ${user.name.split(' ')[0]}</a>
+          <button onclick="logout()" class="btn btn-secondary">Déconnexion</button>
+        `;
+      }
+    }
+
+    async function loadPros() {
+      const params = new URLSearchParams(window.location.search);
+      const job = params.get('job');
+      const search = params.get('search');
+
+      if (job) {
+        document.getElementById('pageTitle').textContent = job;
+        currentFilter = job;
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[data-filter="${job}"]`)?.classList.add('active');
+      }
+
+      let query = db.from('professionals').select('*').eq('is_available', true);
+      
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,job.ilike.%${search}%,city.ilike.%${search}%`);
+        document.getElementById('pageTitle').textContent = `Résultats pour "${search}"`;
+      } else if (job) {
+        query = query.eq('job', job);
+      }
+
+      const { data } = await query.order('rating', { ascending: false });
+      allPros = data || [];
+      renderPros();
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+      renderPros();
+    }
+
+    function renderPros() {
+      const filtered = currentFilter === 'all' 
+        ? allPros 
+        : allPros.filter(p => p.job === currentFilter);
+
+      document.getElementById('resultCount').textContent = 
+        `${filtered.length} professionnel${filtered.length > 1 ? 's' : ''} trouvé${filtered.length > 1 ? 's' : ''}`;
+
+      const grid = document.getElementById('prosGrid');
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-muted)">
+            <i class="fa-solid fa-magnifying-glass" style="font-size: 40px; margin-bottom: 16px; opacity: 0.5"></i>
+            <p>Aucun professionnel trouvé</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(pro => `
+        <a href="booking.html?id=${pro.id}&name=${encodeURIComponent(pro.name)}&job=${encodeURIComponent(pro.job)}" class="pro-card fade-in">
+          <div class="pro-header">
+            <div class="pro-avatar">${pro.name[0].toUpperCase()}</div>
+            <div class="pro-info">
+              <h4>${pro.name}</h4>
+              <p>${pro.job}</p>
+            </div>
+          </div>
+          <div class="pro-meta">
+            <span class="pro-meta-item"><i class="fa-solid fa-location-dot"></i> ${pro.city}</span>
+            <span class="pro-meta-item"><i class="fa-solid fa-star" style="color: var(--orange)"></i> ${pro.rating || '0.0'}</span>
+          </div>
+          ${pro.price_per_hour ? `<div class="pro-price">${pro.price_per_hour} DA/h</div>` : ''}
+        </a>
+      `).join('');
+    }
+
+    loadNavbar();
+    loadPros();
+  </script>
+</body>
+</html>

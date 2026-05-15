@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Réservation — ProConnect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo" onclick="location.href='index.html'">ProConnect</div>
+    <div class="nav-links">
+      <a href="javascript:history.back()" class="btn btn-secondary">← Retour</a>
+    </div>
+  </nav>
+
+  <div class="auth-container">
+    <div class="auth-card" style="max-width: 540px;">
+      <h1 class="auth-title">Réserver un créneau 📅</h1>
+      <p class="auth-subtitle" id="proInfo">Chargement...</p>
+
+      <div class="error-msg" id="errorMsg"></div>
+
+      <form onsubmit="handleBooking(event)">
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-calendar"></i> Date</label>
+          <input type="date" id="date" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-clock"></i> Heure</label>
+          <input type="time" id="time" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-note-sticky"></i> Note (optionnel)</label>
+          <textarea id="note" class="form-input" rows="3" placeholder="Décris le problème ou le travail à faire..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+          <span id="btnText">Confirmer la réservation</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const proId = params.get('id');
+    const proName = params.get('name');
+    const proJob = params.get('job');
+
+    document.getElementById('proInfo').innerHTML = 
+      `Avec <strong style="color: var(--primary-light)">${proName}</strong> — ${proJob}`;
+
+    // Date minimum = aujourd'hui
+    document.getElementById('date').min = new Date().toISOString().split('T')[0];
+
+    async function handleBooking(e) {
+      e.preventDefault();
+      
+      const user = await getCurrentUser();
+      if (!user) {
+        window.location.href = `login.html`;
+        return;
+      }
+
+      const date = document.getElementById('date').value;
+      const time = document.getElementById('time').value;
+      const note = document.getElementById('note').value.trim();
+
+      const btn = document.getElementById('submitBtn');
+      const text = document.getElementById('btnText');
+      btn.disabled = true;
+      text.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const dateTime = `${date}T${time}:00`;
+        
+        const { error } = await db.from('bookings').insert({
+          client_id: user.id,
+          professional_id: proId,
+          pro_name: proName,
+          job: proJob,
+          date_time: dateTime,
+          status: 'pending',
+          note: note || null
+        });
+
+        if (error) throw error;
+
+        alert('✅ Réservation confirmée ! Le pro va recevoir ta demande.');
+        window.location.href = 'profile.html';
+      } catch (err) {
+        document.getElementById('errorMsg').textContent = "Erreur : " + err.message;
+        document.getElementById('errorMsg').classList.add('show');
+        btn.disabled = false;
+        text.textContent = 'Confirmer la réservation';
+      }
+    }
+  </script>
+</body>
+</html>

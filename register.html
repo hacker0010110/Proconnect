@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscription — ProConnect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo" onclick="location.href='index.html'">ProConnect</div>
+    <div class="nav-links">
+      <a href="login.html" class="btn btn-secondary">Connexion</a>
+    </div>
+  </nav>
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <h1 class="auth-title">Créer un compte ✨</h1>
+      <p class="auth-subtitle">Rejoins ProConnect en quelques secondes</p>
+
+      <div class="error-msg" id="errorMsg"></div>
+
+      <div class="role-selector">
+        <div class="role-card active" data-role="client" onclick="selectRole('client')">
+          <div class="role-icon">👤</div>
+          <div class="role-name">Client</div>
+          <div class="role-desc">Trouve un pro</div>
+        </div>
+        <div class="role-card" data-role="professional" onclick="selectRole('professional')">
+          <div class="role-icon">💼</div>
+          <div class="role-name">Professionnel</div>
+          <div class="role-desc">Offre tes services</div>
+        </div>
+      </div>
+
+      <form onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label class="form-label">Nom complet</label>
+          <input type="text" id="name" class="form-input" placeholder="Malek Ould Youcef" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="email" class="form-input" placeholder="ton@email.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mot de passe (6 caractères min.)</label>
+          <input type="password" id="password" class="form-input" placeholder="••••••••" required minlength="6">
+        </div>
+
+        <div id="proFields" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Ton métier</label>
+            <select id="job" class="form-select">
+              <option value="">Sélectionne ton métier</option>
+              <option>Plomberie</option>
+              <option>Électricité</option>
+              <option>Ménage</option>
+              <option>Jardinage</option>
+              <option>Peinture</option>
+              <option>Informatique</option>
+              <option>Mécanique</option>
+              <option>Maçonnerie</option>
+              <option>Menuiserie</option>
+              <option>Climatisation</option>
+              <option>Déménagement</option>
+              <option>Autre</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ta ville</label>
+            <input type="text" id="city" class="form-input" placeholder="Alger, Blida, Oran...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Prix par heure (DA)</label>
+            <input type="number" id="price" class="form-input" placeholder="1500">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+          <span id="btnText">Créer mon compte</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Déjà un compte ? <a href="login.html">Se connecter</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Pré-sélectionne le rôle si dans l'URL
+    const urlRole = new URLSearchParams(window.location.search).get('role');
+    if (urlRole === 'pro') selectRole('professional');
+  </script>
+</body>
+</html>

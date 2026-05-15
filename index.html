@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProConnect — Le bon pro au bon moment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="logo" onclick="location.href='index.html'">ProConnect</div>
+    <div class="nav-links" id="navLinks">
+      <a href="login.html" class="nav-link">Connexion</a>
+      <a href="register.html" class="btn btn-primary">S'inscrire</a>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- HERO -->
+    <section class="hero">
+      <!-- GAUCHE -->
+      <div class="hero-left">
+        <div class="greeting" id="greeting">
+          <i class="fa-solid fa-sparkles" style="color: var(--orange)"></i>
+          <span>Plus de 3000 pros vérifiés à ton service</span>
+        </div>
+
+        <h1 class="hero-title">
+          Le bon pro,<br>
+          <span class="accent">au bon moment.</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Trouve, compare et réserve un professionnel près de chez toi en quelques clics.
+          Plombiers, électriciens, peintres et plus encore.
+        </p>
+
+        <form class="search-container" onsubmit="handleSearch(event)">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" class="search-bar" id="searchInput" 
+                 placeholder="Quel service cherches-tu ? (ex: plomberie, Alger...)">
+          <button type="submit" class="search-btn">
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+
+        <a href="register.html?role=pro" class="cta-pro">
+          <div class="cta-icon">
+            <i class="fa-solid fa-briefcase" style="color: white"></i>
+          </div>
+          <div class="cta-text">
+            <h4>Tu es un professionnel ?</h4>
+            <p>Rejoins ProConnect et trouve des clients dès aujourd'hui</p>
+          </div>
+          <i class="fa-solid fa-arrow-right" style="color: var(--orange); margin-left: auto"></i>
+        </a>
+      </div>
+
+      <!-- DROITE -->
+      <div class="hero-right">
+        <div class="section-header">
+          <h3 class="section-title">Explore par catégorie</h3>
+          <a href="professionals.html" class="section-link">Voir tout →</a>
+        </div>
+
+        <div class="categories-grid">
+          <a href="professionals.html?job=Plomberie" class="category-card plomberie">
+            <div class="category-icon"><i class="fa-solid fa-droplet" style="color: white"></i></div>
+            <div class="category-name">Plomberie</div>
+            <div class="category-count">120+ pros</div>
+          </a>
+          <a href="professionals.html?job=Électricité" class="category-card electricite">
+            <div class="category-icon"><i class="fa-solid fa-bolt" style="color: white"></i></div>
+            <div class="category-name">Électricité</div>
+            <div class="category-count">95+ pros</div>
+          </a>
+          <a href="professionals.html?job=Ménage" class="category-card menage">
+            <div class="category-icon"><i class="fa-solid fa-broom" style="color: white"></i></div>
+            <div class="category-name">Ménage</div>
+            <div class="category-count">200+ pros</div>
+          </a>
+          <a href="professionals.html?job=Jardinage" class="category-card jardinage">
+            <div class="category-icon"><i class="fa-solid fa-seedling" style="color: white"></i></div>
+            <div class="category-name">Jardinage</div>
+            <div class="category-count">80+ pros</div>
+          </a>
+          <a href="professionals.html?job=Peinture" class="category-card peinture">
+            <div class="category-icon"><i class="fa-solid fa-paint-roller" style="color: white"></i></div>
+            <div class="category-name">Peinture</div>
+            <div class="category-count">110+ pros</div>
+          </a>
+          <a href="professionals.html?job=Informatique" class="category-card informatique">
+            <div class="category-icon"><i class="fa-solid fa-laptop-code" style="color: white"></i></div>
+            <div class="category-name">Informatique</div>
+            <div class="category-count">60+ pros</div>
+          </a>
+          <a href="professionals.html?job=Mécanique" class="category-card mecanique">
+            <div class="category-icon"><i class="fa-solid fa-wrench" style="color: white"></i></div>
+            <div class="category-name">Mécanique</div>
+            <div class="category-count">75+ pros</div>
+          </a>
+          <a href="professionals.html?job=Maçonnerie" class="category-card maconnerie">
+            <div class="category-icon"><i class="fa-solid fa-trowel-bricks" style="color: white"></i></div>
+            <div class="category-name">Maçonnerie</div>
+            <div class="category-count">45+ pros</div>
+          </a>
+          <a href="professionals.html?job=Menuiserie" class="category-card menuiserie">
+            <div class="category-icon"><i class="fa-solid fa-hammer" style="color: white"></i></div>
+            <div class="category-name">Menuiserie</div>
+            <div class="category-count">55+ pros</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-value">3000+</div>
+        <div class="stat-label">Pros vérifiés</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">50k+</div>
+        <div class="stat-label">Réservations</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">4.8★</div>
+        <div class="stat-label">Note moyenne</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">48</div>
+        <div class="stat-label">Wilayas couvertes</div>
+      </div>
+    </section>
+
+    <!-- PROS POPULAIRES -->
+    <section class="section">
+      <div class="section-header">
+        <h3 class="section-title">⭐ Pros populaires près de chez toi</h3>
+        <a href="professionals.html" class="section-link">Voir tout →</a>
+      </div>
+      <div class="pros-grid" id="prosGrid">
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted)">
+          Chargement des professionnels...
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>

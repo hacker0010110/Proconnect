@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon profil — ProConnect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .profile-header {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    .profile-avatar {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--cyan) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px; font-weight: 800; color: white;
+    }
+    .profile-name { font-size: 32px; font-weight: 800; margin-bottom: 4px; }
+    .profile-email { color: var(--text-secondary); margin-bottom: 12px; }
+    .profile-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--primary); color: white;
+      padding: 6px 14px; border-radius: 100px;
+      font-size: 13px; font-weight: 600;
+    }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px;
+    }
+    .booking-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 12px;
+    }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 12px; border-radius: 100px;
+      font-size: 12px; font-weight: 600;
+    }
+    .status-pending { background: rgba(245, 158, 11, 0.15); color: var(--orange); }
+    .status-confirmed { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+    .status-cancelled { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+    .status-completed { background: rgba(59, 130, 246, 0.15); color: #60A5FA; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo" onclick="location.href='index.html'">ProConnect</div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Accueil</a>
+      <button onclick="logout()" class="btn btn-secondary">Déconnexion</button>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div id="content">Chargement...</div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script>
+    async function loadProfile() {
+      const user = await requireAuth();
+      if (!user) return;
+
+      const { data: bookings } = await db
+        .from('bookings')
+        .select('*')
+        .eq('client_id', user.id)
+        .order('date_time', { ascending: false });
+
+      const stats = {
+        total: bookings?.length || 0,
+        pending: bookings?.filter(b => b.status === 'pending').length || 0,
+        confirmed: bookings?.filter(b => b.status === 'confirmed').length || 0,
+        completed: bookings?.filter(b => b.status === 'completed').length || 0,
+      };
+
+      const statusLabels = {
+        pending: { label: '⏳ En attente', class: 'status-pending' },
+        confirmed: { label: '✓ Confirmée', class: 'status-confirmed' },
+        cancelled: { label: '✗ Refusée', class: 'status-cancelled' },
+        completed: { label: '✓ Terminée', class: 'status-completed' },
+      };
+
+      document.getElementById('content').innerHTML = `
+        <div class="profile-header fade-in">
+          <div class="profile-avatar">${user.name[0].toUpperCase()}</div>
+          <div>
+            <h1 class="profile-name">${user.name}</h1>
+            <div class="profile-email">${user.email}</div>
+            <div class="profile-badge"><i class="fa-solid fa-user"></i> Client</div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value">${stats.total}</div>
+            <div class="stat-label">Total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="background: var(--orange); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${stats.pending}</div>
+            <div class="stat-label">En attente</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="background: var(--green); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${stats.confirmed}</div>
+            <div class="stat-label">Confirmées</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${stats.completed}</div>
+            <div class="stat-label">Terminées</div>
+          </div>
+        </div>
+
+        <h2 style="font-size: 24px; margin-bottom: 20px;">📅 Mes réservations</h2>
+        ${bookings?.length === 0 ? `
+          <div style="text-align: center; padding: 60px; color: var(--text-muted)">
+            <i class="fa-solid fa-calendar" style="font-size: 40px; opacity: 0.5; margin-bottom: 16px;"></i>
+            <p>Aucune réservation pour le moment</p>
+            <a href="index.html" class="btn btn-primary" style="margin-top: 20px;">Réserver un pro</a>
+          </div>
+        ` : bookings.map(b => `
+          <div class="booking-card">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+              <div>
+                <h3 style="font-size: 18px; margin-bottom: 4px;">${b.pro_name}</h3>
+                <p style="color: var(--text-secondary); font-size: 14px;">${b.job}</p>
+              </div>
+              <span class="status-badge ${statusLabels[b.status].class}">${statusLabels[b.status].label}</span>
+            </div>
+            <div style="display: flex; gap: 16px; font-size: 14px; color: var(--text-secondary);">
+              <span><i class="fa-solid fa-calendar"></i> ${new Date(b.date_time).toLocaleDateString('fr-FR')}</span>
+              <span><i class="fa-solid fa-clock"></i> ${new Date(b.date_time).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</span>
+            </div>
+            ${b.note ? `<p style="margin-top: 10px; padding: 10px; background: var(--bg-surface); border-radius: 8px; font-size: 14px;">📝 ${b.note}</p>` : ''}
+          </div>
+        `).join('')}
+      `;
+
+      // Realtime : écoute les changements
+      db.channel('bookings-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `client_id=eq.${user.id}` }, 
+          () => loadProfile())
+        .subscribe();
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>
