@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Notifications — ProConnect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .notif-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 10px; display: flex; align-items: start; gap: 14px; cursor: pointer; transition: all 0.2s; }
+    .notif-card.unread { border-left: 4px solid var(--primary); }
+    .notif-card:hover { background: var(--bg-card-hover); }
+    .notif-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo" onclick="location.href='index.html'">ProConnect</div>
+    <div class="nav-links" id="navLinks"></div>
+  </nav>
+
+  <main class="main">
+    <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 24px;">🔔 Notifications</h1>
+    <div id="notifsList">Chargement...</div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/navbar.js"></script>
+  <script>
+    async function load() {
+      const user = await requireAuth();
+      if (!user) return;
+
+      const { data: notifs } = await db.from('notifications')
+        .select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+
+      const list = document.getElementById('notifsList');
+      if (!notifs || notifs.length === 0) {
+        list.innerHTML = '<div style="text-align: center; padding: 60px; color: var(--text-muted)"><i class="fa-solid fa-bell-slash" style="font-size: 40px; opacity: 0.5; margin-bottom: 16px;"></i><p>Aucune notification</p></div>';
+        return;
+      }
+
+      const icons = { info: '💬', success: '✅', warning: '⚠️', booking: '📅' };
+      const colors = { info: 'var(--cyan)', success: 'var(--green)', warning: 'var(--orange)', booking: 'var(--primary)' };
+
+      list.innerHTML = notifs.map(n => `
+        <div class="notif-card ${!n.read ? 'unread' : ''}" onclick="markRead('${n.id}', '${n.link || ''}')">
+          <div class="notif-icon" style="background: ${colors[n.type] || colors.info}20; color: ${colors[n.type] || colors.info};">${icons[n.type] || icons.info}</div>
+          <div style="flex: 1;">
+            <h4 style="margin-bottom: 4px;">${n.title}</h4>
+            <p style="color: var(--text-secondary); font-size: 14px;">${n.message}</p>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">${new Date(n.created_at).toLocaleString('fr-FR')}</p>
+          </div>
+        </div>
+      `).join('');
+
+      // Marque tout comme lu
+      await db.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false);
+    }
+
+    async function markRead(id, link) {
+      await db.from('notifications').update({ read: true }).eq('id', id);
+      if (link) window.location.href = link;
+    }
+
+    load();
+  </script>
+</body>
+</html>

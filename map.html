@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Carte des pros — ProConnect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .map-wrapper { display: grid; grid-template-columns: 1fr 380px; gap: 20px; height: calc(100vh - 140px); }
+    #map { border-radius: 16px; border: 1px solid var(--border); height: 100%; z-index: 1; }
+    .map-sidebar { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; overflow-y: auto; }
+    .map-pro-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
+    .map-pro-card:hover { border-color: var(--primary); transform: translateX(4px); }
+    .leaflet-popup-content-wrapper { background: var(--bg-card); color: var(--text-primary); border-radius: 12px; }
+    .leaflet-popup-tip { background: var(--bg-card); }
+    @media (max-width: 968px) {
+      .map-wrapper { grid-template-columns: 1fr; height: auto; }
+      #map { height: 400px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo" onclick="location.href='index.html'">ProConnect</div>
+    <div class="nav-links" id="navLinks"></div>
+  </nav>
+
+  <main class="main">
+    <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">🗺️ Carte des pros</h1>
+    <p style="color: var(--text-secondary); margin-bottom: 20px;">Trouve un professionnel près de chez toi</p>
+
+    <div class="map-wrapper">
+      <div id="map"></div>
+      <div class="map-sidebar">
+        <h3 style="margin-bottom: 12px;">Filtrer</h3>
+        <select id="jobFilter" class="form-select" onchange="applyMapFilter()" style="margin-bottom: 16px;">
+          <option value="">Tous les métiers</option>
+          <option>Plomberie</option><option>Électricité</option>
+          <option>Ménage</option><option>Jardinage</option>
+          <option>Peinture</option><option>Informatique</option>
+          <option>Mécanique</option><option>Maçonnerie</option>
+          <option>Menuiserie</option>
+        </select>
+        <h3 style="margin-bottom: 12px;">Pros sur la carte</h3>
+        <div id="prosList"><p style="color: var(--text-muted)">Chargement...</p></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/navbar.js"></script>
+  <script>
+    let map, markers = [], allPros = [];
+
+    async function initMap() {
+      map = L.map('map').setView([36.7372, 3.0865], 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      // Position de l'utilisateur
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const { latitude, longitude } = pos.coords;
+          map.setView([latitude, longitude], 12);
+          L.marker([latitude, longitude], {
+            icon: L.divIcon({
+              html: '<div style="background: #06B6D4; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 8px rgba(6,182,212,0.3);"></div>',
+              iconSize: [20, 20], className: ''
+            })
+          }).addTo(map).bindPopup('📍 Tu es ici');
+        });
+      }
+
+      await loadPros();
+    }
+
+    async function loadPros() {
+      const { data } = await db.from('professionals')
+        .select('*').eq('is_available', true)
+        .not('latitude', 'is', null);
+      allPros = data || [];
+      renderMarkers(allPros);
+      renderList(allPros);
+    }
+
+    function renderMarkers(pros) {
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+      pros.forEach(pro => {
+        const icon = L.divIcon({
+          html: `<div style="background: linear-gradient(135deg, #7C3AED, #06B6D4); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">${pro.name[0]}</div>`,
+          iconSize: [36, 36], className: ''
+        });
+        const marker = L.marker([pro.latitude, pro.longitude], { icon }).addTo(map);
+        marker.bindPopup(`
+          <div style="padding: 8px; min-width: 200px;">
+            <h4 style="margin-bottom: 4px;">${pro.name}</h4>
+            <p style="color: #94A3B8; font-size: 13px; margin-bottom: 6px;">${pro.job} • ${pro.city}</p>
+            <p style="font-size: 13px;">⭐ ${pro.rating || '0.0'} ${pro.price_per_hour ? `• ${pro.price_per_hour} DA/h` : ''}</p>
+            <a href="pro-detail.html?id=${pro.id}" style="display: block; margin-top: 8px; background: #7C3AED; color: white; padding: 6px 12px; border-radius: 8px; text-align: center; text-decoration: none;">Voir le profil</a>
+          </div>
+        `);
+        markers.push(marker);
+      });
+    }
+
+    function renderList(pros) {
+      const list = document.getElementById('prosList');
+      if (pros.length === 0) {
+        list.innerHTML = '<p style="color: var(--text-muted)">Aucun pro trouvé</p>';
+        return;
+      }
+      list.innerHTML = pros.map(pro => `
+        <div class="map-pro-card" onclick="focusPro(${pro.latitude}, ${pro.longitude})">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--cyan)); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">${pro.name[0]}</div>
+            <div>
+              <h4 style="font-size: 14px;">${pro.name}</h4>
+              <p style="font-size: 12px; color: var(--text-secondary);">${pro.job}</p>
+            </div>
+          </div>
+          <div style="font-size: 12px; color: var(--text-secondary);">
+            📍 ${pro.city} • ⭐ ${pro.rating || '0.0'}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function focusPro(lat, lng) {
+      map.setView([lat, lng], 14);
+    }
+
+    function applyMapFilter() {
+      const job = document.getElementById('jobFilter').value;
+      const filtered = job ? allPros.filter(p => p.job === job) : allPros;
+      renderMarkers(filtered);
+      renderList(filtered);
+    }
+
+    initMap();
+  </script>
+</body>
+</html>

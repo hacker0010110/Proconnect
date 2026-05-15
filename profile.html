@@ -52,24 +52,90 @@
     .status-confirmed { background: rgba(16, 185, 129, 0.15); color: var(--green); }
     .status-cancelled { background: rgba(239, 68, 68, 0.15); color: var(--red); }
     .status-completed { background: rgba(59, 130, 246, 0.15); color: #60A5FA; }
+
+    /* Modal d'avis */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px;
+      max-width: 500px;
+      width: 100%;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .star-rating {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .star-rating i {
+      font-size: 36px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .star-rating i.active {
+      color: var(--orange);
+      transform: scale(1.1);
+    }
+    .star-rating i:hover {
+      transform: scale(1.2);
+    }
   </style>
 </head>
 <body>
   <nav class="navbar">
     <div class="logo" onclick="location.href='index.html'">ProConnect</div>
-    <div class="nav-links">
-      <a href="index.html" class="nav-link">Accueil</a>
-      <button onclick="logout()" class="btn btn-secondary">Déconnexion</button>
-    </div>
+    <div class="nav-links" id="navLinks"></div>
   </nav>
 
   <main class="main">
     <div id="content">Chargement...</div>
   </main>
 
+  <!-- Modal d'avis -->
+  <div class="modal-overlay" id="reviewModal">
+    <div class="modal-content">
+      <h2 style="font-size: 24px; margin-bottom: 8px;">Laisser un avis</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 16px;" id="modalProName"></p>
+      
+      <label style="font-size: 14px; color: var(--text-secondary);">Ta note :</label>
+      <div class="star-rating" id="starRating">
+        <i class="fa-solid fa-star" data-rating="1"></i>
+        <i class="fa-solid fa-star" data-rating="2"></i>
+        <i class="fa-solid fa-star" data-rating="3"></i>
+        <i class="fa-solid fa-star" data-rating="4"></i>
+        <i class="fa-solid fa-star" data-rating="5"></i>
+      </div>
+
+      <label style="font-size: 14px; color: var(--text-secondary);">Ton commentaire :</label>
+      <textarea id="reviewComment" class="form-input" rows="4" placeholder="Partage ton expérience..." style="margin-top: 8px; margin-bottom: 20px;"></textarea>
+
+      <div style="display: flex; gap: 12px;">
+        <button onclick="closeReviewModal()" class="btn btn-secondary" style="flex: 1;">Annuler</button>
+        <button onclick="submitReview()" class="btn btn-primary" style="flex: 1;">Envoyer l'avis</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js"></script>
+  <script src="js/navbar.js"></script>
   <script>
+    let currentReview = { bookingId: null, proId: null, proName: '', rating: 0 };
+
     async function loadProfile() {
       const user = await requireAuth();
       if (!user) return;
@@ -79,6 +145,13 @@
         .select('*')
         .eq('client_id', user.id)
         .order('date_time', { ascending: false });
+
+      // Récupère les avis déjà laissés pour savoir lesquels masquer
+      const { data: myReviews } = await db
+        .from('reviews')
+        .select('professional_id')
+        .eq('client_id', user.id);
+      const reviewedProIds = new Set(myReviews?.map(r => r.professional_id) || []);
 
       const stats = {
         total: bookings?.length || 0,
@@ -124,7 +197,7 @@
         </div>
 
         <h2 style="font-size: 24px; margin-bottom: 20px;">📅 Mes réservations</h2>
-        ${bookings?.length === 0 ? `
+        ${!bookings || bookings.length === 0 ? `
           <div style="text-align: center; padding: 60px; color: var(--text-muted)">
             <i class="fa-solid fa-calendar" style="font-size: 40px; opacity: 0.5; margin-bottom: 16px;"></i>
             <p>Aucune réservation pour le moment</p>
@@ -144,15 +217,119 @@
               <span><i class="fa-solid fa-clock"></i> ${new Date(b.date_time).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</span>
             </div>
             ${b.note ? `<p style="margin-top: 10px; padding: 10px; background: var(--bg-surface); border-radius: 8px; font-size: 14px;">📝 ${b.note}</p>` : ''}
+            ${b.status === 'completed' && !reviewedProIds.has(b.professional_id) ? `
+              <button onclick="openReviewModal('${b.id}', '${b.professional_id}', '${b.pro_name.replace(/'/g, "\\'")}')" class="btn btn-primary" style="margin-top: 12px;">
+                <i class="fa-solid fa-star"></i> Laisser un avis
+              </button>
+            ` : ''}
+            ${b.status === 'completed' && reviewedProIds.has(b.professional_id) ? `
+              <p style="margin-top: 12px; color: var(--green); font-size: 13px;">
+                <i class="fa-solid fa-check-circle"></i> Avis déjà laissé
+              </p>
+            ` : ''}
           </div>
         `).join('')}
       `;
 
-      // Realtime : écoute les changements
+      // Realtime
       db.channel('bookings-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `client_id=eq.${user.id}` }, 
           () => loadProfile())
         .subscribe();
+    }
+
+    function openReviewModal(bookingId, proId, proName) {
+      currentReview = { bookingId, proId, proName, rating: 0 };
+      document.getElementById('modalProName').textContent = `Pour ${proName}`;
+      document.getElementById('reviewComment').value = '';
+      document.querySelectorAll('#starRating i').forEach(s => s.classList.remove('active'));
+      document.getElementById('reviewModal').classList.add('show');
+    }
+
+    function closeReviewModal() {
+      document.getElementById('reviewModal').classList.remove('show');
+    }
+
+    // Système d'étoiles cliquables
+    document.querySelectorAll('#starRating i').forEach(star => {
+      star.addEventListener('click', (e) => {
+        const rating = parseInt(e.target.dataset.rating);
+        currentReview.rating = rating;
+        document.querySelectorAll('#starRating i').forEach(s => {
+          s.classList.toggle('active', parseInt(s.dataset.rating) <= rating);
+        });
+      });
+
+      star.addEventListener('mouseenter', (e) => {
+        const rating = parseInt(e.target.dataset.rating);
+        document.querySelectorAll('#starRating i').forEach(s => {
+          s.style.color = parseInt(s.dataset.rating) <= rating ? 'var(--orange)' : '';
+        });
+      });
+
+      star.addEventListener('mouseleave', () => {
+        document.querySelectorAll('#starRating i').forEach(s => {
+          s.style.color = '';
+        });
+      });
+    });
+
+    async function submitReview() {
+      if (currentReview.rating === 0) {
+        alert('Donne une note !');
+        return;
+      }
+      const comment = document.getElementById('reviewComment').value.trim();
+      if (!comment) {
+        alert('Écris un commentaire !');
+        return;
+      }
+
+      const user = await getCurrentUser();
+
+      try {
+        // Insère l'avis
+        await db.from('reviews').insert({
+          professional_id: currentReview.proId,
+          client_id: user.id,
+          client_name: user.name,
+          rating: currentReview.rating,
+          comment
+        });
+
+        // Met à jour la note moyenne du pro
+        const { data: allReviews } = await db
+          .from('reviews')
+          .select('rating')
+          .eq('professional_id', currentReview.proId);
+        
+        const avg = allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length;
+        
+        await db.from('professionals').update({
+          rating: avg,
+          review_count: allReviews.length
+        }).eq('id', currentReview.proId);
+
+        // Notifie le pro
+        const { data: pro } = await db.from('professionals')
+          .select('user_id').eq('id', currentReview.proId).single();
+        
+        if (pro) {
+          await db.from('notifications').insert({
+            user_id: pro.user_id,
+            title: '⭐ Nouvel avis reçu',
+            message: `${user.name} t'a laissé un avis ${currentReview.rating}/5`,
+            type: 'success',
+            link: 'pro-dashboard.html'
+          });
+        }
+
+        closeReviewModal();
+        alert('✅ Merci pour ton avis !');
+        loadProfile();
+      } catch (err) {
+        alert('Erreur : ' + err.message);
+      }
     }
 
     loadProfile();

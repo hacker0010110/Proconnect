@@ -2,148 +2,197 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Professionnels — ProConnect</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .filters-bar {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 24px;
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .filter-chip {
-      padding: 8px 16px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-    .filter-chip.active {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: white;
-    }
-    .filter-chip:hover {
-      border-color: var(--primary);
+    .pros-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+    .filters-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; height: fit-content; position: sticky; top: 90px; }
+    .filter-section { margin-bottom: 24px; }
+    .filter-section h4 { font-size: 14px; margin-bottom: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .filter-option { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; padding: 6px 8px; border-radius: 8px; transition: background 0.2s; }
+    .filter-option:hover { background: var(--bg-surface); }
+    .filter-option input { accent-color: var(--primary); }
+    .price-range { display: flex; gap: 8px; align-items: center; }
+    .price-range input { width: 100%; }
+    .star-filter { display: flex; gap: 4px; cursor: pointer; }
+    .star-filter .star { color: var(--text-muted); font-size: 18px; transition: color 0.2s; }
+    .star-filter.selected .star { color: var(--orange); }
+    .search-autocomplete { position: relative; }
+    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-top: 4px; max-height: 300px; overflow-y: auto; z-index: 10; display: none; }
+    .autocomplete-list.show { display: block; }
+    .autocomplete-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border); }
+    .autocomplete-item:hover { background: var(--bg-card-hover); }
+    .autocomplete-item:last-child { border-bottom: none; }
+    @media (max-width: 968px) {
+      .pros-layout { grid-template-columns: 1fr; }
+      .filters-panel { position: static; }
     }
   </style>
 </head>
 <body>
   <nav class="navbar">
     <div class="logo" onclick="location.href='index.html'">ProConnect</div>
-    <div class="nav-links" id="navLinks">
-      <a href="login.html" class="nav-link">Connexion</a>
-      <a href="register.html" class="btn btn-primary">S'inscrire</a>
-    </div>
+    <div class="nav-links" id="navLinks"></div>
   </nav>
 
   <main class="main">
-    <h1 style="font-size: 36px; font-weight: 800; margin-bottom: 8px;" id="pageTitle">
-      Tous les pros
-    </h1>
-    <p style="color: var(--text-secondary); margin-bottom: 24px;" id="resultCount">
-      Chargement...
-    </p>
+    <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;" id="pageTitle">Tous les pros</h1>
+    <p style="color: var(--text-secondary); margin-bottom: 24px;" id="resultCount">Chargement...</p>
 
-    <div class="filters-bar">
-      <span style="font-weight: 600; margin-right: 8px;">Filtrer :</span>
-      <div class="filter-chip active" data-filter="all" onclick="setFilter('all')">Tous</div>
-      <div class="filter-chip" data-filter="Plomberie" onclick="setFilter('Plomberie')">Plomberie</div>
-      <div class="filter-chip" data-filter="Électricité" onclick="setFilter('Électricité')">Électricité</div>
-      <div class="filter-chip" data-filter="Ménage" onclick="setFilter('Ménage')">Ménage</div>
-      <div class="filter-chip" data-filter="Jardinage" onclick="setFilter('Jardinage')">Jardinage</div>
-      <div class="filter-chip" data-filter="Peinture" onclick="setFilter('Peinture')">Peinture</div>
-      <div class="filter-chip" data-filter="Informatique" onclick="setFilter('Informatique')">Informatique</div>
+    <div class="search-autocomplete" style="margin-bottom: 24px;">
+      <input type="text" id="searchInput" class="form-input" placeholder="🔍 Rechercher un pro, un métier, une ville..." oninput="handleAutocomplete()">
+      <div class="autocomplete-list" id="autocompleteList"></div>
     </div>
 
-    <div class="pros-grid" id="prosGrid">
-      <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted)">
-        Chargement...
+    <div class="pros-layout">
+      <aside class="filters-panel">
+        <div class="filter-section">
+          <h4>Métier</h4>
+          <select id="jobFilter" class="form-select" onchange="applyFilters()">
+            <option value="">Tous</option>
+            <option>Plomberie</option><option>Électricité</option>
+            <option>Ménage</option><option>Jardinage</option>
+            <option>Peinture</option><option>Informatique</option>
+            <option>Mécanique</option><option>Maçonnerie</option>
+            <option>Menuiserie</option>
+          </select>
+        </div>
+
+        <div class="filter-section">
+          <h4>Ville</h4>
+          <select id="cityFilter" class="form-select" onchange="applyFilters()">
+            <option value="">Toutes</option>
+          </select>
+        </div>
+
+        <div class="filter-section">
+          <h4>Prix max / heure</h4>
+          <div class="price-range">
+            <input type="range" id="priceFilter" min="0" max="5000" step="100" value="5000" oninput="updatePriceLabel()" onchange="applyFilters()">
+          </div>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;" id="priceLabel">Jusqu'à 5000 DA/h</p>
+        </div>
+
+        <div class="filter-section">
+          <h4>Note minimum</h4>
+          <div id="ratingFilter">
+            <div class="filter-option" onclick="setRating(0)"><input type="radio" name="rating" checked> Toutes les notes</div>
+            <div class="filter-option" onclick="setRating(3)"><input type="radio" name="rating"> ⭐ 3.0+</div>
+            <div class="filter-option" onclick="setRating(4)"><input type="radio" name="rating"> ⭐ 4.0+</div>
+            <div class="filter-option" onclick="setRating(4.5)"><input type="radio" name="rating"> ⭐ 4.5+</div>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <h4>Trier par</h4>
+          <select id="sortBy" class="form-select" onchange="applyFilters()">
+            <option value="rating">⭐ Meilleure note</option>
+            <option value="price_asc">💰 Prix croissant</option>
+            <option value="price_desc">💰 Prix décroissant</option>
+            <option value="recent">🆕 Plus récents</option>
+          </select>
+        </div>
+
+        <button onclick="resetFilters()" class="btn btn-secondary btn-block">
+          <i class="fa-solid fa-rotate-left"></i> Réinitialiser
+        </button>
+      </aside>
+
+      <div class="pros-grid" id="prosGrid">
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted)">Chargement...</div>
       </div>
     </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js"></script>
+  <script src="js/navbar.js"></script>
   <script>
     let allPros = [];
-    let currentFilter = 'all';
-
-    async function loadNavbar() {
-      const user = await getCurrentUser();
-      if (user) {
-        const path = user.role === 'professional' ? 'pro-dashboard.html' : 'profile.html';
-        document.getElementById('navLinks').innerHTML = `
-          <a href="${path}" class="nav-link"><i class="fa-solid fa-user"></i> ${user.name.split(' ')[0]}</a>
-          <button onclick="logout()" class="btn btn-secondary">Déconnexion</button>
-        `;
-      }
-    }
+    let minRating = 0;
 
     async function loadPros() {
-      const params = new URLSearchParams(window.location.search);
-      const job = params.get('job');
-      const search = params.get('search');
-
-      if (job) {
-        document.getElementById('pageTitle').textContent = job;
-        currentFilter = job;
-        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-        document.querySelector(`[data-filter="${job}"]`)?.classList.add('active');
-      }
-
-      let query = db.from('professionals').select('*').eq('is_available', true);
-      
-      if (search) {
-        query = query.or(`name.ilike.%${search}%,job.ilike.%${search}%,city.ilike.%${search}%`);
-        document.getElementById('pageTitle').textContent = `Résultats pour "${search}"`;
-      } else if (job) {
-        query = query.eq('job', job);
-      }
-
-      const { data } = await query.order('rating', { ascending: false });
+      const { data } = await db.from('professionals').select('*').eq('is_available', true);
       allPros = data || [];
-      renderPros();
+
+      // Remplit les villes uniques
+      const cities = [...new Set(allPros.map(p => p.city))].sort();
+      document.getElementById('cityFilter').innerHTML = '<option value="">Toutes</option>' +
+        cities.map(c => `<option>${c}</option>`).join('');
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('job')) {
+        document.getElementById('jobFilter').value = params.get('job');
+        document.getElementById('pageTitle').textContent = params.get('job');
+      }
+      if (params.get('search')) {
+        document.getElementById('searchInput').value = params.get('search');
+      }
+
+      applyFilters();
     }
 
-    function setFilter(filter) {
-      currentFilter = filter;
-      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-      document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
-      renderPros();
+    function setRating(rating) {
+      minRating = rating;
+      document.querySelectorAll('#ratingFilter input').forEach((r, i) => {
+        r.checked = ([0, 3, 4, 4.5][i] === rating);
+      });
+      applyFilters();
     }
 
-    function renderPros() {
-      const filtered = currentFilter === 'all' 
-        ? allPros 
-        : allPros.filter(p => p.job === currentFilter);
+    function updatePriceLabel() {
+      const val = document.getElementById('priceFilter').value;
+      document.getElementById('priceLabel').textContent = `Jusqu'à ${val} DA/h`;
+    }
 
+    function applyFilters() {
+      const job = document.getElementById('jobFilter').value;
+      const city = document.getElementById('cityFilter').value;
+      const maxPrice = parseInt(document.getElementById('priceFilter').value);
+      const sortBy = document.getElementById('sortBy').value;
+      const search = document.getElementById('searchInput').value.toLowerCase().trim();
+
+      let filtered = allPros.filter(p => {
+        if (job && p.job !== job) return false;
+        if (city && p.city !== city) return false;
+        if (p.price_per_hour && p.price_per_hour > maxPrice) return false;
+        if ((p.rating || 0) < minRating) return false;
+        if (search) {
+          const text = `${p.name} ${p.job} ${p.city} ${p.description || ''}`.toLowerCase();
+          if (!text.includes(search)) return false;
+        }
+        return true;
+      });
+
+      // Tri
+      if (sortBy === 'rating') filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      else if (sortBy === 'price_asc') filtered.sort((a, b) => (a.price_per_hour || 0) - (b.price_per_hour || 0));
+      else if (sortBy === 'price_desc') filtered.sort((a, b) => (b.price_per_hour || 0) - (a.price_per_hour || 0));
+      else if (sortBy === 'recent') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      renderPros(filtered);
+    }
+
+    function renderPros(pros) {
       document.getElementById('resultCount').textContent = 
-        `${filtered.length} professionnel${filtered.length > 1 ? 's' : ''} trouvé${filtered.length > 1 ? 's' : ''}`;
+        `${pros.length} professionnel${pros.length > 1 ? 's' : ''} trouvé${pros.length > 1 ? 's' : ''}`;
 
       const grid = document.getElementById('prosGrid');
-      if (filtered.length === 0) {
+      if (pros.length === 0) {
         grid.innerHTML = `
           <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-muted)">
             <i class="fa-solid fa-magnifying-glass" style="font-size: 40px; margin-bottom: 16px; opacity: 0.5"></i>
-            <p>Aucun professionnel trouvé</p>
+            <p>Aucun professionnel ne correspond à tes critères</p>
+            <button onclick="resetFilters()" class="btn btn-primary" style="margin-top: 16px;">Réinitialiser les filtres</button>
           </div>
         `;
         return;
       }
 
-      grid.innerHTML = filtered.map(pro => `
-        <a href="booking.html?id=${pro.id}&name=${encodeURIComponent(pro.name)}&job=${encodeURIComponent(pro.job)}" class="pro-card fade-in">
+      grid.innerHTML = pros.map(pro => `
+        <a href="pro-detail.html?id=${pro.id}" class="pro-card fade-in">
           <div class="pro-header">
             <div class="pro-avatar">${pro.name[0].toUpperCase()}</div>
             <div class="pro-info">
@@ -153,14 +202,57 @@
           </div>
           <div class="pro-meta">
             <span class="pro-meta-item"><i class="fa-solid fa-location-dot"></i> ${pro.city}</span>
-            <span class="pro-meta-item"><i class="fa-solid fa-star" style="color: var(--orange)"></i> ${pro.rating || '0.0'}</span>
+            <span class="pro-meta-item"><i class="fa-solid fa-star" style="color: var(--orange)"></i> ${pro.rating || '0.0'} (${pro.review_count || 0})</span>
           </div>
           ${pro.price_per_hour ? `<div class="pro-price">${pro.price_per_hour} DA/h</div>` : ''}
         </a>
       `).join('');
     }
 
-    loadNavbar();
+    function resetFilters() {
+      document.getElementById('jobFilter').value = '';
+      document.getElementById('cityFilter').value = '';
+      document.getElementById('priceFilter').value = 5000;
+      document.getElementById('sortBy').value = 'rating';
+      document.getElementById('searchInput').value = '';
+      setRating(0);
+      updatePriceLabel();
+      applyFilters();
+    }
+
+    function handleAutocomplete() {
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      const list = document.getElementById('autocompleteList');
+      if (q.length < 2) {
+        list.classList.remove('show');
+        applyFilters();
+        return;
+      }
+      const matches = allPros.filter(p => 
+        p.name.toLowerCase().includes(q) || 
+        p.job.toLowerCase().includes(q) || 
+        p.city.toLowerCase().includes(q)
+      ).slice(0, 5);
+
+      if (matches.length === 0) {
+        list.classList.remove('show');
+      } else {
+        list.innerHTML = matches.map(p => `
+          <div class="autocomplete-item" onclick="location.href='pro-detail.html?id=${p.id}'">
+            <strong>${p.name}</strong> — ${p.job} • ${p.city}
+          </div>
+        `).join('');
+        list.classList.add('show');
+      }
+      applyFilters();
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-autocomplete')) {
+        document.getElementById('autocompleteList').classList.remove('show');
+      }
+    });
+
     loadPros();
   </script>
 </body>
