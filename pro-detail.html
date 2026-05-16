@@ -23,10 +23,10 @@
   </style>
 </head>
 <body>
-  <nav class="navbar">
-    <div class="logo" onclick="location.href='index.html'">ProConnect</div>
-    <div class="nav-links" id="navLinks"></div>
-  </nav>
+    <nav class="navbar">
+        <div class="logo" onclick="location.href='index.html'">ProConnect</div>
+        <div class="nav-links" id="navLinks"></div>
+      </nav>
 
   <main class="main">
     <div id="content">Chargement...</div>
@@ -48,7 +48,9 @@
       const stars = (n) => '★'.repeat(Math.floor(n)) + '☆'.repeat(5 - Math.floor(n));
 
       document.getElementById('content').innerHTML = `
-        <a href="professionals.html" style="color: var(--text-secondary); text-decoration: none; display: inline-block; margin-bottom: 20px;">← Retour aux pros</a>
+      <a href="professionals.html" class="back-link">
+      <i class="fa-solid fa-arrow-left"></i> Retour aux pros
+       </a>
         
         <div class="pro-detail-header fade-in">
           <div class="pro-detail-avatar">${pro.name[0].toUpperCase()}</div>

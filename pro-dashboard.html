@@ -23,12 +23,8 @@
       background: var(--bg-card); border: 1px solid var(--border);
       border-radius: 16px; padding: 20px; margin-bottom: 14px;
     }
-    .btn-confirm {
-      background: var(--green); color: white;
-    }
-    .btn-reject {
-      background: transparent; border: 1px solid var(--red); color: var(--red);
-    }
+    .btn-confirm { background: var(--green); color: white; }
+    .btn-reject { background: transparent; border: 1px solid var(--red); color: var(--red); }
     .status-badge {
       display: inline-flex; padding: 4px 12px; border-radius: 100px;
       font-size: 12px; font-weight: 600;
@@ -47,16 +43,14 @@
 <body>
   <nav class="navbar">
     <div class="logo" onclick="location.href='index.html'">ProConnect</div>
-    <div class="nav-links">
-      <a href="index.html" class="nav-link">Accueil</a>
-      <button onclick="logout()" class="btn btn-secondary">Déconnexion</button>
-    </div>
+    <div class="nav-links" id="navLinks"></div>
   </nav>
 
   <main class="main">
     <a href="index.html" class="back-link">
-        <i class="fa-solid fa-arrow-left"></i> Retour à l'accueil
-      </a>
+      <i class="fa-solid fa-arrow-left"></i> Retour à l'accueil
+    </a>
+
     <div id="header">Chargement...</div>
 
     <div class="pro-tabs">
@@ -70,6 +64,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js"></script>
+  <script src="js/navbar.js"></script>
   <script>
     let currentUser = null;
     let proData = null;
@@ -97,7 +92,6 @@
       renderHeader();
       switchTab('dashboard');
 
-      // Realtime
       db.channel('pro-bookings')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `professional_id=eq.${proData.id}` },
           () => switchTab(currentTab))
@@ -201,12 +195,12 @@
               </div>
             ` : ''}
             ${(b.status === 'pending' || b.status === 'confirmed') ? `
-  <a href="chat.html?booking=${b.id}" class="btn btn-secondary btn-block" style="margin-top: 10px;">
-    <i class="fa-solid fa-comments"></i> Discuter avec le client
-  </a>
-` : ''}
+              <a href="chat.html?booking=${b.id}" class="btn btn-secondary btn-block" style="margin-top: 10px;">
+                <i class="fa-solid fa-comments"></i> Discuter avec le client
+              </a>
+            ` : ''}
             ${b.status === 'confirmed' ? `
-              <button onclick="updateStatus('${b.id}', 'completed')" class="btn btn-primary btn-block">
+              <button onclick="updateStatus('${b.id}', 'completed')" class="btn btn-primary btn-block" style="margin-top: 10px;">
                 <i class="fa-solid fa-check-double"></i> Marquer comme terminée
               </button>
             ` : ''}
