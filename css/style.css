@@ -1,4 +1,4 @@
-
+/* === RESET === */
 * {
     margin: 0;
     padding: 0;
@@ -39,32 +39,14 @@
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  
   @keyframes fadeInLeft {
     from { opacity: 0; transform: translateX(-30px); }
     to { opacity: 1; transform: translateX(0); }
   }
-  
   @keyframes fadeInRight {
     from { opacity: 0; transform: translateX(30px); }
     to { opacity: 1; transform: translateX(0); }
   }
-  
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-  
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-  }
-  
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-  
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
@@ -117,6 +99,28 @@
   .nav-link:hover {
     color: var(--text-primary);
     background: var(--bg-card);
+  }
+  
+  /* === BOUTON RETOUR === */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    transition: all 0.2s;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+  }
+  
+  .back-link:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    transform: translateX(-3px);
   }
   
   /* === BOUTONS === */
@@ -179,7 +183,7 @@
     margin: 0 auto;
   }
   
-  /* === HERO DUAL LAYOUT === */
+  /* === HERO === */
   .hero {
     display: grid;
     grid-template-columns: 1fr 1.2fr;
@@ -187,9 +191,8 @@
     margin-bottom: 48px;
   }
   
-  .hero-left {
-    animation: fadeInLeft 0.6s ease-out;
-  }
+  .hero-left { animation: fadeInLeft 0.6s ease-out; }
+  .hero-right { animation: fadeInRight 0.6s ease-out; }
   
   .greeting {
     display: inline-flex;
@@ -306,21 +309,10 @@
     flex-shrink: 0;
   }
   
-  .cta-text h4 {
-    font-size: 16px;
-    margin-bottom: 4px;
-  }
+  .cta-text h4 { font-size: 16px; margin-bottom: 4px; }
+  .cta-text p { font-size: 14px; color: var(--text-secondary); }
   
-  .cta-text p {
-    font-size: 14px;
-    color: var(--text-secondary);
-  }
-  
-  /* === HERO RIGHT — CATEGORIES === */
-  .hero-right {
-    animation: fadeInRight 0.6s ease-out;
-  }
-  
+  /* === SECTION HEADERS === */
   .section-header {
     display: flex;
     justify-content: space-between;
@@ -340,6 +332,7 @@
     font-weight: 500;
   }
   
+  /* === CATEGORIES === */
   .categories-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -369,19 +362,14 @@
     transition: opacity 0.3s;
   }
   
-  .category-card:hover::before {
-    opacity: 0.1;
-  }
+  .category-card:hover::before { opacity: 0.1; }
   
   .category-card:hover {
     transform: translateY(-4px);
     border-color: var(--cat-color-1);
   }
   
-  .category-card > * {
-    position: relative;
-    z-index: 1;
-  }
+  .category-card > * { position: relative; z-index: 1; }
   
   .category-icon {
     width: 48px;
@@ -404,17 +392,12 @@
   .category-card.mecanique { --cat-color-1: #6B7280; --cat-color-2: #374151; }
   .category-card.maconnerie { --cat-color-1: #F59E0B; --cat-color-2: #92400E; }
   .category-card.menuiserie { --cat-color-1: #92400E; --cat-color-2: #78350F; }
+  .category-card.transport { --cat-color-1: #F59E0B; --cat-color-2: #EF4444; }
+  .category-card.coiffure { --cat-color-1: #EC4899; --cat-color-2: #F59E0B; }
+  .category-card.esthetique { --cat-color-1: #EC4899; --cat-color-2: #8B5CF6; }
   
-  .category-name {
-    font-size: 14px;
-    font-weight: 600;
-  }
-  
-  .category-count {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 4px;
-  }
+  .category-name { font-size: 14px; font-weight: 600; }
+  .category-count { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
   
   /* === STATS === */
   .stats {
@@ -453,11 +436,10 @@
     color: var(--text-secondary);
   }
   
-  /* === FEATURED PROS === */
-  .section {
-    margin-bottom: 48px;
-  }
+  /* === SECTIONS === */
+  .section { margin-bottom: 48px; }
   
+  /* === PROS GRID === */
   .pros-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -501,15 +483,8 @@
     color: white;
   }
   
-  .pro-info h4 {
-    font-size: 16px;
-    margin-bottom: 2px;
-  }
-  
-  .pro-info p {
-    font-size: 13px;
-    color: var(--text-secondary);
-  }
+  .pro-info h4 { font-size: 16px; margin-bottom: 2px; }
+  .pro-info p { font-size: 13px; color: var(--text-secondary); }
   
   .pro-meta {
     display: flex;
@@ -561,9 +536,7 @@
     margin-bottom: 32px;
   }
   
-  .form-group {
-    margin-bottom: 18px;
-  }
+  .form-group { margin-bottom: 18px; }
   
   .form-label {
     display: block;
@@ -614,20 +587,9 @@
     background: rgba(124, 58, 237, 0.1);
   }
   
-  .role-icon {
-    font-size: 28px;
-    margin-bottom: 8px;
-  }
-  
-  .role-name {
-    font-weight: 600;
-    margin-bottom: 2px;
-  }
-  
-  .role-desc {
-    font-size: 12px;
-    color: var(--text-muted);
-  }
+  .role-icon { font-size: 28px; margin-bottom: 8px; }
+  .role-name { font-weight: 600; margin-bottom: 2px; }
+  .role-desc { font-size: 12px; color: var(--text-muted); }
   
   .error-msg {
     background: rgba(239, 68, 68, 0.1);
@@ -674,7 +636,118 @@
     .navbar { padding: 16px 24px; }
   }
   
-  @media (max-width: 600px) {
-    .categories-grid { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 768px) {
+    .navbar {
+      padding: 12px 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .logo { font-size: 20px; }
+    .nav-links {
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .nav-link {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+    .btn { padding: 8px 14px; font-size: 13px; }
+    
+    .main { padding: 90px 16px 24px; }
+    
+    .hero {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .hero-title { font-size: 32px; letter-spacing: -1px; }
+    .hero-subtitle { font-size: 15px; }
+    
+    .categories-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .category-card { padding: 14px 10px; }
+    .category-icon { width: 38px; height: 38px; font-size: 18px; }
+    .category-name { font-size: 12px; }
+    
+    .stats {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .stat-card { padding: 16px; }
+    .stat-value { font-size: 24px; }
+    .stat-label { font-size: 12px; }
+    
+    .pros-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    
+    .auth-card {
+      padding: 24px 20px;
+      border-radius: 16px;
+    }
+    .auth-title { font-size: 22px; }
+    
+    .form-input, .form-select {
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+    
+    .pros-layout {
+      grid-template-columns: 1fr !important;
+    }
+    .filters-panel {
+      position: static !important;
+    }
+    
+    .profile-header {
+      flex-direction: column;
+      text-align: center;
+      padding: 24px;
+    }
+    .profile-name { font-size: 24px; }
+    
+    .stats-grid {
+      grid-template-columns: 1fr 1fr !important;
+    }
+    
+    .pro-detail-header {
+      flex-direction: column;
+      text-align: center;
+      padding: 24px;
+    }
+    .pro-detail-name { font-size: 24px; }
+    .pro-detail-avatar { width: 100px; height: 100px; font-size: 44px; }
+    
+    .map-wrapper {
+      grid-template-columns: 1fr !important;
+      height: auto !important;
+    }
+    #map { height: 350px !important; }
+    
+    .time-slots {
+      grid-template-columns: repeat(3, 1fr) !important;
+    }
+    .duration-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    .pro-tabs {
+      width: 100% !important;
+      overflow-x: auto;
+    }
+    .pro-tab {
+      padding: 8px 14px !important;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .hero-title { font-size: 26px; }
     .stats { grid-template-columns: 1fr 1fr; }
+    .categories-grid { grid-template-columns: 1fr 1fr; }
+    .time-slots { grid-template-columns: repeat(2, 1fr) !important; }
   }

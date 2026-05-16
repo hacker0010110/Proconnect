@@ -54,6 +54,9 @@
   </nav>
 
   <main class="main">
+    <a href="index.html" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Retour à l'accueil
+      </a>
     <div id="header">Chargement...</div>
 
     <div class="pro-tabs">
@@ -197,6 +200,11 @@
                 </button>
               </div>
             ` : ''}
+            ${(b.status === 'pending' || b.status === 'confirmed') ? `
+  <a href="chat.html?booking=${b.id}" class="btn btn-secondary btn-block" style="margin-top: 10px;">
+    <i class="fa-solid fa-comments"></i> Discuter avec le client
+  </a>
+` : ''}
             ${b.status === 'confirmed' ? `
               <button onclick="updateStatus('${b.id}', 'completed')" class="btn btn-primary btn-block">
                 <i class="fa-solid fa-check-double"></i> Marquer comme terminée

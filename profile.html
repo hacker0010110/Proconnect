@@ -102,6 +102,9 @@
   </nav>
 
   <main class="main">
+    <a href="index.html" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Retour à l'accueil
+      </a>
     <div id="content">Chargement...</div>
   </main>
 
@@ -222,6 +225,12 @@
                 <i class="fa-solid fa-star"></i> Laisser un avis
               </button>
             ` : ''}
+            ${(b.status === 'pending' || b.status === 'confirmed') ? `
+  <a href="chat.html?booking=${b.id}" class="btn btn-secondary" style="margin-top: 12px; margin-left: 8px;">
+    <i class="fa-solid fa-comments"></i> Discuter
+  </a>
+` : ''}
+ 
             ${b.status === 'completed' && reviewedProIds.has(b.professional_id) ? `
               <p style="margin-top: 12px; color: var(--green); font-size: 13px;">
                 <i class="fa-solid fa-check-circle"></i> Avis déjà laissé
