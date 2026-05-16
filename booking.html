@@ -7,17 +7,85 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .time-slots {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .time-slot {
+      padding: 10px;
+      text-align: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .time-slot:hover:not(.disabled) {
+      border-color: var(--primary);
+    }
+    .time-slot.selected {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .time-slot.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+    .duration-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .duration-option {
+      padding: 12px;
+      text-align: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .duration-option.selected {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .summary {
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 20px 0;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--text-secondary); text-decoration: none;
+      padding: 8px 14px; border-radius: 8px;
+      transition: all 0.2s; font-size: 14px;
+    }
+    .back-btn:hover { background: var(--bg-card); color: var(--text-primary); }
+  </style>
 </head>
 <body>
   <nav class="navbar">
     <div class="logo" onclick="location.href='index.html'">ProConnect</div>
-    <div class="nav-links">
-      <a href="javascript:history.back()" class="btn btn-secondary">← Retour</a>
-    </div>
+    <div class="nav-links" id="navLinks"></div>
   </nav>
 
   <div class="auth-container">
-    <div class="auth-card" style="max-width: 540px;">
+    <div class="auth-card" style="max-width: 600px;">
+      <a href="javascript:history.back()" class="back-btn" style="margin-bottom: 16px;">
+        <i class="fa-solid fa-arrow-left"></i> Retour
+      </a>
+
       <h1 class="auth-title">Réserver un créneau 📅</h1>
       <p class="auth-subtitle" id="proInfo">Chargement...</p>
 
@@ -25,13 +93,23 @@
 
       <form onsubmit="handleBooking(event)">
         <div class="form-group">
-          <label class="form-label"><i class="fa-solid fa-calendar"></i> Date</label>
-          <input type="date" id="date" class="form-input" required>
+          <label class="form-label"><i class="fa-solid fa-calendar"></i> Choisis une date</label>
+          <input type="date" id="date" class="form-input" required onchange="loadAvailableSlots()">
         </div>
 
         <div class="form-group">
-          <label class="form-label"><i class="fa-solid fa-clock"></i> Heure</label>
-          <input type="time" id="time" class="form-input" required>
+          <label class="form-label"><i class="fa-solid fa-hourglass"></i> Durée estimée</label>
+          <div class="duration-grid">
+            <div class="duration-option" data-duration="1" onclick="setDuration(1)">1h</div>
+            <div class="duration-option selected" data-duration="2" onclick="setDuration(2)">2h</div>
+            <div class="duration-option" data-duration="4" onclick="setDuration(4)">4h (matinée)</div>
+            <div class="duration-option" data-duration="8" onclick="setDuration(8)">Journée</div>
+          </div>
+        </div>
+
+        <div class="form-group" id="slotsContainer" style="display: none;">
+          <label class="form-label"><i class="fa-solid fa-clock"></i> Choisis une heure de début</label>
+          <div class="time-slots" id="timeSlots"></div>
         </div>
 
         <div class="form-group">
@@ -39,8 +117,10 @@
           <textarea id="note" class="form-input" rows="3" placeholder="Décris le problème ou le travail à faire..."></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
-          <span id="btnText">Confirmer la réservation</span>
+        <div class="summary" id="summary" style="display: none;"></div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="submitBtn" disabled>
+          <span id="btnText">Sélectionne un créneau</span>
         </button>
       </form>
     </div>
@@ -54,52 +134,149 @@
     const proName = params.get('name');
     const proJob = params.get('job');
 
+    let selectedDuration = 2;
+    let selectedHour = null;
+    let occupiedSlots = [];
+
     document.getElementById('proInfo').innerHTML = 
       `Avec <strong style="color: var(--primary-light)">${proName}</strong> — ${proJob}`;
-
-    // Date minimum = aujourd'hui
     document.getElementById('date').min = new Date().toISOString().split('T')[0];
+
+    function setDuration(hours) {
+      selectedDuration = hours;
+      document.querySelectorAll('.duration-option').forEach(o => o.classList.remove('selected'));
+      document.querySelector(`[data-duration="${hours}"]`).classList.add('selected');
+      if (document.getElementById('date').value) loadAvailableSlots();
+    }
+
+    async function loadAvailableSlots() {
+      const date = document.getElementById('date').value;
+      if (!date) return;
+
+      // Récupère les créneaux occupés
+      const startOfDay = `${date}T00:00:00`;
+      const endOfDay = `${date}T23:59:59`;
+      
+      const { data: slots } = await db.from('time_slots')
+        .select('*')
+        .eq('professional_id', proId)
+        .gte('start_time', startOfDay)
+        .lte('end_time', endOfDay);
+
+      occupiedSlots = slots || [];
+
+      // Affiche les créneaux de 8h à 20h
+      const container = document.getElementById('timeSlots');
+      let html = '';
+      for (let h = 8; h <= 20 - selectedDuration; h++) {
+        const startTime = new Date(`${date}T${String(h).padStart(2,'0')}:00:00`);
+        const endTime = new Date(startTime.getTime() + selectedDuration * 60 * 60 * 1000);
+
+        const isOccupied = occupiedSlots.some(s => {
+          const sStart = new Date(s.start_time);
+          const sEnd = new Date(s.end_time);
+          return (startTime < sEnd && endTime > sStart);
+        });
+
+        // Heure dans le passé ?
+        const isPast = startTime < new Date();
+
+        html += `
+          <div class="time-slot ${(isOccupied || isPast) ? 'disabled' : ''}" 
+               ${!isOccupied && !isPast ? `onclick="selectHour(${h})"` : ''}
+               data-hour="${h}">
+            ${String(h).padStart(2,'0')}:00
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+      document.getElementById('slotsContainer').style.display = 'block';
+    }
+
+    function selectHour(h) {
+      selectedHour = h;
+      document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+      document.querySelector(`[data-hour="${h}"]`).classList.add('selected');
+
+      const date = document.getElementById('date').value;
+      const dateObj = new Date(`${date}T${String(h).padStart(2,'0')}:00:00`);
+      const endHour = h + selectedDuration;
+      
+      document.getElementById('summary').style.display = 'block';
+      document.getElementById('summary').innerHTML = `
+        <strong>📋 Récapitulatif</strong><br>
+        <span style="color: var(--text-secondary); font-size: 14px;">
+          📅 ${dateObj.toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'})}<br>
+          ⏰ De ${String(h).padStart(2,'0')}:00 à ${String(endHour).padStart(2,'0')}:00<br>
+          ⏱️ Durée : ${selectedDuration}h
+        </span>
+      `;
+
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('btnText').textContent = 'Confirmer la réservation';
+    }
 
     async function handleBooking(e) {
       e.preventDefault();
-      
+      if (selectedHour === null) return;
+
       const user = await getCurrentUser();
       if (!user) {
-        window.location.href = `login.html`;
+        window.location.href = 'login.html';
         return;
       }
 
       const date = document.getElementById('date').value;
-      const time = document.getElementById('time').value;
       const note = document.getElementById('note').value.trim();
+      const startTime = `${date}T${String(selectedHour).padStart(2,'0')}:00:00`;
+      const endTime = `${date}T${String(selectedHour + selectedDuration).padStart(2,'0')}:00:00`;
 
       const btn = document.getElementById('submitBtn');
-      const text = document.getElementById('btnText');
       btn.disabled = true;
-      text.innerHTML = '<div class="spinner"></div>';
+      document.getElementById('btnText').innerHTML = '<div class="spinner"></div>';
 
       try {
-        const dateTime = `${date}T${time}:00`;
-        
-        const { error } = await db.from('bookings').insert({
+        // Crée la réservation
+        const { data: booking, error } = await db.from('bookings').insert({
           client_id: user.id,
           professional_id: proId,
           pro_name: proName,
           job: proJob,
-          date_time: dateTime,
+          date_time: startTime,
           status: 'pending',
           note: note || null
-        });
+        }).select().single();
 
         if (error) throw error;
 
-        alert('✅ Réservation confirmée ! Le pro va recevoir ta demande.');
+        // Crée le créneau occupé
+        await db.from('time_slots').insert({
+          professional_id: proId,
+          booking_id: booking.id,
+          start_time: startTime,
+          end_time: endTime
+        });
+
+        // Notifie le pro
+        const { data: pro } = await db.from('professionals')
+          .select('user_id').eq('id', proId).single();
+        if (pro) {
+          await db.from('notifications').insert({
+            user_id: pro.user_id,
+            title: '📅 Nouvelle réservation',
+            message: `${user.name} a réservé un créneau le ${new Date(startTime).toLocaleDateString('fr-FR')}`,
+            type: 'booking',
+            link: 'pro-dashboard.html'
+          });
+        }
+
+        alert('✅ Réservation confirmée !');
         window.location.href = 'profile.html';
       } catch (err) {
         document.getElementById('errorMsg').textContent = "Erreur : " + err.message;
         document.getElementById('errorMsg').classList.add('show');
         btn.disabled = false;
-        text.textContent = 'Confirmer la réservation';
+        document.getElementById('btnText').textContent = 'Confirmer la réservation';
       }
     }
   </script>

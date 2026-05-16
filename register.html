@@ -7,6 +7,60 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .jobs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+    .job-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 14px;
+    }
+    .job-checkbox:hover { background: var(--bg-card); }
+    .job-checkbox input { accent-color: var(--primary); }
+    .vehicle-toggle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .vehicle-toggle.active {
+      border-color: var(--primary);
+      background: rgba(124, 58, 237, 0.1);
+    }
+    .vehicle-toggle input { accent-color: var(--primary); width: 18px; height: 18px; }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    .back-btn:hover { background: var(--bg-card); color: var(--text-primary); }
+  </style>
 </head>
 <body>
   <nav class="navbar">
@@ -17,7 +71,11 @@
   </nav>
 
   <div class="auth-container">
-    <div class="auth-card">
+    <div class="auth-card" style="max-width: 540px;">
+      <a href="javascript:history.back()" class="back-btn" style="margin-bottom: 16px;">
+        <i class="fa-solid fa-arrow-left"></i> Retour
+      </a>
+
       <h1 class="auth-title">Créer un compte ✨</h1>
       <p class="auth-subtitle">Rejoins ProConnect en quelques secondes</p>
 
@@ -54,32 +112,56 @@
 
         <div id="proFields" style="display: none;">
           <div class="form-group">
-            <label class="form-label">Ton métier</label>
-            <select id="job" class="form-select">
-              <option value="">Sélectionne ton métier</option>
-              <option>Plomberie</option>
-              <option>Électricité</option>
-              <option>Ménage</option>
-              <option>Jardinage</option>
-              <option>Peinture</option>
-              <option>Informatique</option>
-              <option>Mécanique</option>
-              <option>Maçonnerie</option>
-              <option>Menuiserie</option>
-              <option>Climatisation</option>
-              <option>Déménagement</option>
-              <option>Autre</option>
-            </select>
+            <label class="form-label">Tes métiers (coche tout ce que tu fais)</label>
+            <div class="jobs-grid" id="jobsGrid">
+              <label class="job-checkbox"><input type="checkbox" value="Transport & Livraison"> 🚚 Transport & Livraison</label>
+              <label class="job-checkbox"><input type="checkbox" value="Plomberie"> 🔧 Plomberie</label>
+              <label class="job-checkbox"><input type="checkbox" value="Électricité"> ⚡ Électricité</label>
+              <label class="job-checkbox"><input type="checkbox" value="Ménage"> 🧹 Ménage</label>
+              <label class="job-checkbox"><input type="checkbox" value="Jardinage"> 🌿 Jardinage</label>
+              <label class="job-checkbox"><input type="checkbox" value="Peinture"> 🎨 Peinture</label>
+              <label class="job-checkbox"><input type="checkbox" value="Informatique"> 💻 Informatique</label>
+              <label class="job-checkbox"><input type="checkbox" value="Mécanique"> 🔩 Mécanique</label>
+              <label class="job-checkbox"><input type="checkbox" value="Maçonnerie"> 🧱 Maçonnerie</label>
+              <label class="job-checkbox"><input type="checkbox" value="Menuiserie"> 🪚 Menuiserie</label>
+              <label class="job-checkbox"><input type="checkbox" value="Climatisation"> ❄️ Climatisation</label>
+              <label class="job-checkbox"><input type="checkbox" value="Déménagement"> 📦 Déménagement</label>
+              <label class="job-checkbox"><input type="checkbox" value="Coiffure"> ✂️ Coiffure</label>
+              <label class="job-checkbox"><input type="checkbox" value="Esthétique"> 💄 Esthétique</label>
+              <label class="job-checkbox"><input type="checkbox" value="Cuisine"> 🍳 Cuisine</label>
+              <label class="job-checkbox"><input type="checkbox" value="Vitrerie"> 🪟 Vitrerie</label>
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted);">Le premier métier coché sera ton métier principal</p>
           </div>
 
           <div class="form-group">
             <label class="form-label">Ta ville</label>
-            <input type="text" id="city" class="form-input" placeholder="Alger, Blida, Oran...">
+            <select id="city" class="form-select">
+              <option value="">Sélectionne ta ville</option>
+              <option>Alger</option><option>Oran</option><option>Constantine</option>
+              <option>Annaba</option><option>Blida</option><option>Batna</option>
+              <option>Djelfa</option><option>Sétif</option><option>Sidi Bel Abbès</option>
+              <option>Biskra</option><option>Tébessa</option><option>Tlemcen</option>
+              <option>Béjaïa</option><option>Tiaret</option><option>Bordj Bou Arréridj</option>
+              <option>Skikda</option><option>Chlef</option><option>Souk Ahras</option>
+              <option>Médéa</option><option>El Eulma</option><option>Tizi Ouzou</option>
+              <option>Mostaganem</option><option>El Oued</option><option>Béchar</option>
+              <option>Mascara</option><option>Saïda</option><option>Khenchela</option>
+              <option>Guelma</option><option>Ghardaïa</option><option>Boumerdès</option>
+            </select>
           </div>
 
           <div class="form-group">
             <label class="form-label">Prix par heure (DA)</label>
             <input type="number" id="price" class="form-input" placeholder="1500">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Possèdes-tu un véhicule ?</label>
+            <label class="vehicle-toggle" id="vehicleToggle">
+              <input type="checkbox" id="hasVehicle" onchange="toggleVehicle()">
+              <span>🚗 Oui, je peux me déplacer chez les clients</span>
+            </label>
           </div>
         </div>
 
@@ -96,9 +178,89 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js"></script>
-  <script src="js/auth.js"></script>
   <script>
-    // Pré-sélectionne le rôle si dans l'URL
+    let selectedRole = 'client';
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.querySelectorAll('.role-card').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[data-role="${role}"]`).classList.add('active');
+      document.getElementById('proFields').style.display = role === 'professional' ? 'block' : 'none';
+    }
+
+    function toggleVehicle() {
+      const toggle = document.getElementById('vehicleToggle');
+      const checked = document.getElementById('hasVehicle').checked;
+      toggle.classList.toggle('active', checked);
+    }
+
+    function showError(msg) {
+      const err = document.getElementById('errorMsg');
+      err.textContent = msg;
+      err.classList.add('show');
+    }
+
+    function setLoading(loading) {
+      const btn = document.getElementById('submitBtn');
+      const text = document.getElementById('btnText');
+      btn.disabled = loading;
+      text.innerHTML = loading ? '<div class="spinner"></div>' : 'Créer mon compte';
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      document.getElementById('errorMsg').classList.remove('show');
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      let selectedJobs = [];
+      if (selectedRole === 'professional') {
+        selectedJobs = Array.from(document.querySelectorAll('#jobsGrid input:checked')).map(cb => cb.value);
+        const city = document.getElementById('city').value;
+        if (selectedJobs.length === 0) return showError("Coche au moins un métier");
+        if (!city) return showError("Sélectionne ta ville");
+      }
+
+      setLoading(true);
+
+      try {
+        const { data, error } = await db.auth.signUp({ email, password });
+        if (error) throw error;
+        if (!data.user) throw new Error("Création échouée");
+
+        await db.from('users').insert({
+          id: data.user.id, name, email, role: selectedRole
+        });
+
+        if (selectedRole === 'professional') {
+          const city = document.getElementById('city').value;
+          const price = parseFloat(document.getElementById('price').value) || null;
+          const hasVehicle = document.getElementById('hasVehicle').checked;
+
+          await db.from('professionals').insert({
+            user_id: data.user.id,
+            name,
+            job: selectedJobs[0],
+            specialties: selectedJobs,
+            city, price_per_hour: price,
+            has_vehicle: hasVehicle,
+            rating: 0, review_count: 0,
+            is_available: true, status: 'active'
+          });
+
+          window.location.href = 'pro-dashboard.html';
+        } else {
+          window.location.href = 'index.html';
+        }
+      } catch (err) {
+        if (err.message?.includes('already')) showError("Email déjà utilisé");
+        else showError("Erreur : " + err.message);
+        setLoading(false);
+      }
+    }
+
     const urlRole = new URLSearchParams(window.location.search).get('role');
     if (urlRole === 'pro') selectRole('professional');
   </script>
