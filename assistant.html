@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assistant IA — ProConnect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .assistant-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 75vh;
+      min-height: 550px;
+    }
+    .assistant-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--cyan) 100%);
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .assistant-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      backdrop-filter: blur(10px);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+      50% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(255,255,255,0); }
+    }
+    .assistant-info h1 {
+      color: white;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    .assistant-info p {
+      color: rgba(255,255,255,0.9);
+      font-size: 14px;
+    }
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: var(--bg-surface);
+    }
+    .msg {
+      max-width: 80%;
+      padding: 14px 18px;
+      border-radius: 16px;
+      animation: slideIn 0.4s ease-out;
+      line-height: 1.5;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .msg-bot {
+      align-self: flex-start;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+    .msg-user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 14px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+      max-width: 80px;
+    }
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-secondary);
+      animation: typingDot 1.4s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingDot {
+      0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-6px); }
+    }
+    .pros-suggestion {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .pro-suggest-card {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .pro-suggest-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    .quick-replies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .quick-reply {
+      padding: 8px 14px;
+      background: var(--bg-dark);
+      border: 1px solid var(--primary);
+      color: var(--primary-light);
+      border-radius: 100px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .quick-reply:hover {
+      background: var(--primary);
+      color: white;
+    }
+    .input-area {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      background: var(--bg-card);
+    }
+    .input-area input {
+      flex: 1;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 14px 18px;
+      border-radius: 100px;
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+    }
+    .input-area input:focus { border-color: var(--primary); }
+    .send-btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .send-btn:hover { transform: scale(1.1); }
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: linear-gradient(135deg, var(--cyan), var(--primary));
+      color: white;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      animation: shimmer 3s infinite;
+    }
+    @keyframes shimmer {
+      0%, 100% { box-shadow: 0 0 5px rgba(124,58,237,0.5); }
+      50% { box-shadow: 0 0 20px rgba(124,58,237,0.8); }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo" onclick="location.href='index.html'">ProConnect</div>
+    <div class="nav-links" id="navLinks"></div>
+  </nav>
+
+  <main class="main">
+    <a href="index.html" class="back-link">
+      <i class="fa-solid fa-arrow-left"></i> Retour à l'accueil
+    </a>
+
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div class="ai-badge"><i class="fa-solid fa-sparkles"></i> POWERED BY AI</div>
+      <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">
+        🤖 Assistant ProConnect
+      </h1>
+      <p style="color: var(--text-secondary);">Décris ton problème, je trouve le bon pro pour toi</p>
+    </div>
+
+    <div class="assistant-container">
+      <div class="assistant-header">
+        <div class="assistant-avatar">🤖</div>
+        <div class="assistant-info">
+          <h1>ProBot</h1>
+          <p>✨ Assistant intelligent · En ligne</p>
+        </div>
+      </div>
+
+      <div class="chat-area" id="chatArea"></div>
+
+      <form class="input-area" onsubmit="handleSend(event)">
+        <input type="text" id="userInput" placeholder="Décris ton problème..." autocomplete="off" required>
+        <button type="submit" class="send-btn">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/navbar.js"></script>
+  <script src="js/assistant.js"></script>
+</body>
+</html>
