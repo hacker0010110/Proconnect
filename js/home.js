@@ -1,27 +1,16 @@
-// Charge l'utilisateur et met à jour la navbar
 async function loadUser() {
     const user = await getCurrentUser();
     if (user) {
       const greeting = document.getElementById('greeting');
-      greeting.innerHTML = `
-        <i class="fa-solid fa-hand-wave" style="color: var(--orange)"></i>
-        <span>Bonjour ${user.name.split(' ')[0]} !</span>
-      `;
-  
-      const navLinks = document.getElementById('navLinks');
-      const profilePath = user.role === 'professional' ? 'pro-dashboard.html' : 'profile.html';
-      navLinks.innerHTML = `
-        <a href="${profilePath}" class="nav-link">
-          <i class="fa-solid fa-user"></i> ${user.name.split(' ')[0]}
-        </a>
-        <button onclick="logout()" class="btn btn-secondary">
-          <i class="fa-solid fa-right-from-bracket"></i> Déconnexion
-        </button>
-      `;
+      if (greeting) {
+        greeting.innerHTML = `
+          <i class="fa-solid fa-hand-wave" style="color: var(--orange)"></i>
+          <span>Bonjour ${user.name.split(' ')[0]} !</span>
+        `;
+      }
     }
   }
   
-  // Charge les pros populaires
   async function loadFeaturedPros() {
     const { data, error } = await db
       .from('professionals')
@@ -41,7 +30,14 @@ async function loadUser() {
       return;
     }
   
-    grid.innerHTML = data.map(pro => `
+    const userLocation = await getUserLocation();
+    let pros = data;
+    if (userLocation && typeof enrichProsWithDistance === 'function') {
+      pros = enrichProsWithDistance(data, userLocation);
+      pros = sortByDistance(pros);
+    }
+  
+    grid.innerHTML = pros.map(pro => `
       <a href="booking.html?id=${pro.id}&name=${encodeURIComponent(pro.name)}&job=${encodeURIComponent(pro.job)}" class="pro-card">
         <div class="pro-header">
           <div class="pro-avatar">${pro.name[0].toUpperCase()}</div>
@@ -58,12 +54,16 @@ async function loadUser() {
             <i class="fa-solid fa-star" style="color: var(--orange)"></i> ${pro.rating || '0.0'}
           </span>
         </div>
+        ${pro.distance !== null && pro.distance !== undefined ? `
+          <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(6,182,212,0.15); color: var(--cyan); padding: 4px 10px; border-radius: 100px; font-size: 12px; font-weight: 600; margin-bottom: 8px;">
+            <i class="fa-solid fa-location-arrow"></i> à ${formatDistance(pro.distance)}
+          </div>
+        ` : ''}
         ${pro.price_per_hour ? `<div class="pro-price">${pro.price_per_hour} DA/h</div>` : ''}
       </a>
     `).join('');
   }
   
-  // Recherche
   function handleSearch(e) {
     e.preventDefault();
     const query = document.getElementById('searchInput').value.trim();
@@ -72,6 +72,5 @@ async function loadUser() {
     }
   }
   
-  // Init
   loadUser();
   loadFeaturedPros();
