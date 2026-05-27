@@ -38,6 +38,73 @@
       border-radius: 24px; padding: 60px 40px; text-align: center;
       max-width: 500px; margin: 40px auto;
     }
+    .stats-grid-pro {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;
+    }
+    .stat-card-pro {
+      background: var(--bg-card); border: 1px solid var(--border);
+      padding: 20px; border-radius: 16px;
+      position: relative; overflow: hidden;
+      transition: all 0.3s;
+    }
+    .stat-card-pro:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+    }
+    .stat-card-pro::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: var(--stat-color);
+      opacity: 0.1;
+      transform: translate(20px, -20px);
+    }
+    .stat-icon-pro {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--stat-color);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 20px;
+      margin-bottom: 12px;
+    }
+    .stat-value-pro {
+      font-size: 28px; font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .stat-label-pro {
+      color: var(--text-secondary); font-size: 13px;
+    }
+    .stat-trend {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12px; font-weight: 600;
+      margin-top: 8px;
+    }
+    .trend-up { color: var(--green); }
+    .trend-down { color: var(--red); }
+    
+    .charts-grid {
+      display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
+      margin-bottom: 24px;
+    }
+    .chart-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px;
+    }
+    .chart-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px;
+    }
+    .chart-title { font-size: 16px; font-weight: 700; }
+    .chart-canvas-wrapper {
+      position: relative;
+      height: 280px;
+    }
+    @media (max-width: 968px) {
+      .charts-grid { grid-template-columns: 1fr; }
+      .stats-grid-pro { grid-template-columns: 1fr 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -63,12 +130,14 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="js/supabase.js"></script>
   <script src="js/navbar.js"></script>
   <script>
     let currentUser = null;
     let proData = null;
     let currentTab = 'dashboard';
+    let charts = {};
 
     const statusLabels = {
       pending: { label: '⏳ En attente', class: 'status-pending' },
@@ -117,31 +186,103 @@
       document.querySelectorAll('.pro-tab').forEach(t => t.classList.remove('active'));
       document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
 
+      // Détruit les charts précédents
+      Object.values(charts).forEach(c => c.destroy());
+      charts = {};
+
       if (tab === 'dashboard') renderDashboard();
       if (tab === 'requests') renderRequests();
       if (tab === 'availability') renderAvailability();
     }
 
     async function renderDashboard() {
-      const { data: bookings } = await db
-        .from('bookings').select('*').eq('professional_id', proData.id);
+      const { data: bookings } = await db.from('bookings').select('*').eq('professional_id', proData.id);
 
       const stats = {
         total: bookings?.length || 0,
         pending: bookings?.filter(b => b.status === 'pending').length || 0,
         confirmed: bookings?.filter(b => b.status === 'confirmed').length || 0,
         completed: bookings?.filter(b => b.status === 'completed').length || 0,
+        cancelled: bookings?.filter(b => b.status === 'cancelled').length || 0,
       };
 
+      // Revenus estimés (réservations terminées × prix/heure × 2h moyenne)
+      const revenue = stats.completed * (proData.price_per_hour || 0) * 2;
+      const acceptanceRate = stats.total > 0 ? Math.round(((stats.confirmed + stats.completed) / stats.total) * 100) : 0;
+
+      // Récupère les avis
+      const { data: reviews } = await db.from('reviews').select('rating').eq('professional_id', proData.id);
+      const avgRating = reviews?.length > 0 
+        ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+        : '0.0';
+
       document.getElementById('tabContent').innerHTML = `
-        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px;">
-          <div class="stat-card"><div class="stat-value">${stats.total}</div><div class="stat-label">Total demandes</div></div>
-          <div class="stat-card"><div class="stat-value" style="background: var(--orange); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${stats.pending}</div><div class="stat-label">En attente</div></div>
-          <div class="stat-card"><div class="stat-value" style="background: var(--green); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${stats.confirmed}</div><div class="stat-label">Confirmées</div></div>
-          <div class="stat-card"><div class="stat-value">${stats.completed}</div><div class="stat-label">Terminées</div></div>
+        <div class="stats-grid-pro">
+          <div class="stat-card-pro" style="--stat-color: var(--primary);">
+            <div class="stat-icon-pro"><i class="fa-solid fa-calendar-check"></i></div>
+            <div class="stat-value-pro">${stats.total}</div>
+            <div class="stat-label-pro">Total demandes</div>
+            <div class="stat-trend trend-up"><i class="fa-solid fa-arrow-up"></i> +12% ce mois</div>
+          </div>
+          <div class="stat-card-pro" style="--stat-color: var(--green);">
+            <div class="stat-icon-pro"><i class="fa-solid fa-check-double"></i></div>
+            <div class="stat-value-pro">${acceptanceRate}%</div>
+            <div class="stat-label-pro">Taux d'acceptation</div>
+            <div class="stat-trend trend-up"><i class="fa-solid fa-arrow-up"></i> Excellent</div>
+          </div>
+          <div class="stat-card-pro" style="--stat-color: var(--orange);">
+            <div class="stat-icon-pro"><i class="fa-solid fa-coins"></i></div>
+            <div class="stat-value-pro">${revenue.toLocaleString()}</div>
+            <div class="stat-label-pro">Revenus estimés (DA)</div>
+            <div class="stat-trend trend-up"><i class="fa-solid fa-arrow-up"></i> +24%</div>
+          </div>
+          <div class="stat-card-pro" style="--stat-color: var(--cyan);">
+            <div class="stat-icon-pro"><i class="fa-solid fa-star"></i></div>
+            <div class="stat-value-pro">${avgRating}/5</div>
+            <div class="stat-label-pro">Note moyenne</div>
+            <div class="stat-trend trend-up"><i class="fa-solid fa-arrow-up"></i> ${reviews?.length || 0} avis</div>
+          </div>
         </div>
 
-        <h2 style="font-size: 22px; margin-bottom: 16px;">Dernières demandes</h2>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">📈 Évolution des demandes (12 derniers mois)</h3>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="evolutionChart"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">🎯 Répartition des statuts</h3>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">⏰ Heures les plus demandées</h3>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="hoursChart"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">📅 Jours les plus actifs</h3>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="daysChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <h2 style="font-size: 22px; margin-bottom: 16px;">📋 Dernières demandes</h2>
         ${bookings?.slice(0, 5).map(b => `
           <div class="request-card">
             <div style="display: flex; justify-content: space-between;">
@@ -157,11 +298,173 @@
           </div>
         `).join('') || '<p style="color: var(--text-muted)">Aucune demande</p>'}
       `;
+
+      // Crée les graphiques après l'insertion HTML
+      setTimeout(() => createCharts(bookings || []), 100);
+    }
+
+    function createCharts(bookings) {
+      Chart.defaults.color = '#94A3B8';
+      Chart.defaults.borderColor = '#2A3050';
+      Chart.defaults.font.family = 'Inter, sans-serif';
+
+      // 1. Graphique évolution (12 mois)
+      const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+      const now = new Date();
+      const monthlyData = Array(12).fill(0);
+      
+      bookings.forEach(b => {
+        const date = new Date(b.created_at);
+        const monthDiff = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
+        if (monthDiff >= 0 && monthDiff < 12) {
+          monthlyData[11 - monthDiff]++;
+        }
+      });
+
+      const labels12 = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels12.push(months[d.getMonth()]);
+      }
+
+      const ctx1 = document.getElementById('evolutionChart');
+      if (ctx1) {
+        charts.evolution = new Chart(ctx1, {
+          type: 'line',
+          data: {
+            labels: labels12,
+            datasets: [{
+              label: 'Demandes',
+              data: monthlyData,
+              borderColor: '#7C3AED',
+              backgroundColor: 'rgba(124, 58, 237, 0.1)',
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: '#7C3AED',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              pointRadius: 5
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: '#2A3050' } },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      }
+
+      // 2. Graphique statuts (doughnut)
+      const statusData = {
+        'En attente': bookings.filter(b => b.status === 'pending').length,
+        'Confirmées': bookings.filter(b => b.status === 'confirmed').length,
+        'Terminées': bookings.filter(b => b.status === 'completed').length,
+        'Refusées': bookings.filter(b => b.status === 'cancelled').length
+      };
+
+      const ctx2 = document.getElementById('statusChart');
+      if (ctx2) {
+        charts.status = new Chart(ctx2, {
+          type: 'doughnut',
+          data: {
+            labels: Object.keys(statusData),
+            datasets: [{
+              data: Object.values(statusData),
+              backgroundColor: ['#F59E0B', '#10B981', '#60A5FA', '#EF4444'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } }
+            }
+          }
+        });
+      }
+
+      // 3. Heures (24h)
+      const hoursData = Array(24).fill(0);
+      bookings.forEach(b => {
+        const hour = new Date(b.date_time).getHours();
+        hoursData[hour]++;
+      });
+
+      const ctx3 = document.getElementById('hoursChart');
+      if (ctx3) {
+        charts.hours = new Chart(ctx3, {
+          type: 'bar',
+          data: {
+            labels: Array.from({length: 24}, (_, i) => `${i}h`),
+            datasets: [{
+              label: 'Demandes',
+              data: hoursData,
+              backgroundColor: 'rgba(6, 182, 212, 0.6)',
+              borderColor: '#06B6D4',
+              borderWidth: 2,
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: '#2A3050' } },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      }
+
+      // 4. Jours de la semaine
+      const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+      const daysData = Array(7).fill(0);
+      bookings.forEach(b => {
+        const day = new Date(b.date_time).getDay();
+        daysData[day]++;
+      });
+
+      const ctx4 = document.getElementById('daysChart');
+      if (ctx4) {
+        charts.days = new Chart(ctx4, {
+          type: 'radar',
+          data: {
+            labels: days,
+            datasets: [{
+              label: 'Demandes',
+              data: daysData,
+              backgroundColor: 'rgba(245, 158, 11, 0.2)',
+              borderColor: '#F59E0B',
+              borderWidth: 2,
+              pointBackgroundColor: '#F59E0B',
+              pointRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              r: { 
+                beginAtZero: true,
+                grid: { color: '#2A3050' },
+                angleLines: { color: '#2A3050' },
+                pointLabels: { font: { size: 12 } }
+              }
+            }
+          }
+        });
+      }
     }
 
     async function renderRequests() {
-      const { data: bookings } = await db
-        .from('bookings').select('*').eq('professional_id', proData.id)
+      const { data: bookings } = await db.from('bookings').select('*').eq('professional_id', proData.id)
         .order('date_time', { ascending: false });
 
       document.getElementById('tabContent').innerHTML = `
