@@ -1,4 +1,4 @@
-/* === RESET === */
+
 * {
     margin: 0;
     padding: 0;
@@ -40,16 +40,16 @@
     background-attachment: fixed;
   }
   
-  /* Scrollbar custom */
+  
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: var(--bg-surface); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
   
-  /* Sélection texte */
+  
   ::selection { background: var(--primary); color: white; }
   
-  /* === ANIMATIONS === */
+  
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -97,7 +97,7 @@
   .scale-in { animation: scaleIn 0.5s ease-out; }
   .float { animation: float 3s ease-in-out infinite; }
   
-  /* Animations en cascade pour les listes */
+  
   .stagger-children > * {
     opacity: 0;
     animation: fadeInUp 0.5s ease-out forwards;
@@ -112,7 +112,7 @@
   .stagger-children > *:nth-child(8) { animation-delay: 0.4s; }
   .stagger-children > *:nth-child(9) { animation-delay: 0.45s; }
   
-  /* === NAVBAR === */
+  
   .navbar {
     position: fixed;
     top: 0;
@@ -169,7 +169,7 @@
     transform: translateY(-2px);
   }
   
-  /* === BOUTON RETOUR === */
+  
   .back-link {
     display: inline-flex;
     align-items: center;
@@ -192,7 +192,7 @@
     border-color: var(--primary);
   }
   
-  /* === BOUTONS === */
+  
   .btn {
     padding: 12px 24px;
     border-radius: 12px;
@@ -267,7 +267,7 @@
     justify-content: center;
   }
   
-  /* === MAIN LAYOUT === */
+  
   .main {
     padding: 100px 48px 48px;
     max-width: 1400px;
@@ -275,7 +275,7 @@
     animation: fadeIn 0.5s ease-out;
   }
   
-  /* === HERO === */
+  
   .hero {
     display: grid;
     grid-template-columns: 1fr 1.2fr;
@@ -420,7 +420,7 @@
   .cta-text h4 { font-size: 16px; margin-bottom: 4px; }
   .cta-text p { font-size: 14px; color: var(--text-secondary); }
   
-  /* === SECTION HEADERS === */
+  
   .section-header {
     display: flex;
     justify-content: space-between;
@@ -446,7 +446,7 @@
     transform: translateX(4px);
   }
   
-  /* === CATEGORIES === */
+  
   .categories-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -519,7 +519,7 @@
   .category-name { font-size: 14px; font-weight: 600; }
   .category-count { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
   
-  /* === STATS === */
+  
   .stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -557,10 +557,10 @@
     color: var(--text-secondary);
   }
   
-  /* === SECTIONS === */
+  
   .section { margin-bottom: 48px; }
   
-  /* === PROS GRID === */
+  
   .pros-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -648,7 +648,7 @@
   
   .pro-card:hover .pro-price { color: var(--cyan); }
   
-  /* === AUTH PAGES === */
+  
   .auth-container {
     min-height: 100vh;
     display: flex;
@@ -772,7 +772,7 @@
   
   .auth-footer a:hover { color: var(--cyan); }
   
-  /* === LOADING === */
+  
   .spinner {
     width: 20px;
     height: 20px;
@@ -782,7 +782,7 @@
     animation: spin 0.8s linear infinite;
   }
   
-  /* Skeleton loader pour le chargement des cartes */
+  
   .skeleton {
     background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-card-hover) 50%, var(--bg-card) 100%);
     background-size: 200% 100%;
@@ -790,7 +790,7 @@
     border-radius: 12px;
   }
   
-  /* === RESPONSIVE === */
+  
   @media (max-width: 968px) {
     .hero { grid-template-columns: 1fr; }
     .hero-title { font-size: 40px; }

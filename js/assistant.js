@@ -65,12 +65,10 @@ const jobKnowledge = {
       response: "Pour des soins **esthétiques**, voici les pros."
     }
   };
-  
   const greetings = [
     "Salut ! 👋 Je suis ProBot, ton assistant intelligent. Dis-moi ce dont tu as besoin et je trouve le bon pro pour toi.",
     "Tu peux me dire par exemple : *\"J'ai une fuite d'eau\"*, *\"Mon PC bug\"* ou *\"Je dois déménager\"*"
   ];
-  
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => addBotMessage(greetings[0]), 400);
     setTimeout(() => {
@@ -78,7 +76,6 @@ const jobKnowledge = {
       showQuickReplies(['🔧 Fuite d\'eau', '⚡ Panne électrique', '🚚 Déménagement', '💻 Problème PC']);
     }, 1400);
   });
-  
   function addMessage(content, isUser = false) {
     const chat = document.getElementById('chatArea');
     const msg = document.createElement('div');
@@ -87,12 +84,10 @@ const jobKnowledge = {
     chat.appendChild(msg);
     chat.scrollTop = chat.scrollHeight;
   }
-  
   function addBotMessage(content) {
     content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     addMessage(content, false);
   }
-  
   function showTyping() {
     const chat = document.getElementById('chatArea');
     const typing = document.createElement('div');
@@ -102,12 +97,10 @@ const jobKnowledge = {
     chat.appendChild(typing);
     chat.scrollTop = chat.scrollHeight;
   }
-  
   function hideTyping() {
     const t = document.getElementById('typingIndicator');
     if (t) t.remove();
   }
-  
   function showQuickReplies(replies) {
     const chat = document.getElementById('chatArea');
     const container = document.createElement('div');
@@ -118,30 +111,24 @@ const jobKnowledge = {
     chat.appendChild(container);
     chat.scrollTop = chat.scrollHeight;
   }
-  
   function handleQuickReply(text) {
     if (text === '📋 Voir tous les pros') { window.location.href = 'professionals.html'; return; }
     if (text === '🗺️ Voir sur la carte') { window.location.href = 'map.html'; return; }
-    
     document.querySelectorAll('.quick-replies').forEach(el => el.remove());
     document.getElementById('userInput').value = text;
     handleSend(new Event('submit'));
   }
-  
   function handleSend(e) {
     e.preventDefault();
     const input = document.getElementById('userInput');
     const text = input.value.trim();
     if (!text) return;
-  
     document.querySelectorAll('.quick-replies').forEach(el => el.remove());
     addMessage(text, true);
     input.value = '';
-  
     showTyping();
     setTimeout(() => processMessage(text), 600 + Math.random() * 500);
   }
-  
   function normalize(text) {
     return text.toLowerCase()
       .normalize('NFD')
@@ -150,61 +137,47 @@ const jobKnowledge = {
       .replace(/\s+/g, ' ')
       .trim();
   }
-  
   async function processMessage(userText) {
     hideTyping();
-    
     const normalized = normalize(userText);
-    
     if (normalized.match(/^(salut|bonjour|bonsoir|hello|hi|coucou|hey|yo|ca va|cv|kifash|wesh)/)) {
       addBotMessage("Salut ! 😊 Que puis-je faire pour toi ? Décris-moi ton problème et je te trouverai le bon pro.");
       return;
     }
-  
     if (normalized.match(/^(merci|thanks|thx|cimer|sahit)/)) {
       addBotMessage("Avec plaisir ! 🙌 N'hésite pas si tu as besoin d'autre chose.");
       return;
     }
-  
     let bestMatch = null;
     let bestScore = 0;
-    
     for (const [job, data] of Object.entries(jobKnowledge)) {
       let score = 0;
-      
       for (const keyword of data.keywords) {
         const normalizedKeyword = normalize(keyword);
         if (normalized.includes(normalizedKeyword)) {
           score += normalizedKeyword.length;
         }
       }
-      
       if (score > bestScore) {
         bestScore = score;
         bestMatch = { job, ...data };
       }
     }
-  
     if (bestMatch && bestScore > 0) {
       addBotMessage(`${bestMatch.icon} J'ai analysé ta demande... ${bestMatch.response}`);
-      
       setTimeout(async () => {
         showTyping();
-        
         const { data: pros } = await db.from('professionals')
           .select('*')
           .eq('is_available', true)
           .or(`job.eq.${bestMatch.job},specialties.cs.{${bestMatch.job}}`)
           .order('rating', { ascending: false })
           .limit(3);
-  
         hideTyping();
-        
         if (!pros || pros.length === 0) {
           addBotMessage(`😔 Désolé, aucun pro en ${bestMatch.job} n'est disponible pour le moment. Tu peux <a href="professionals.html" style="color: var(--primary-light); text-decoration: underline;">consulter tous les pros</a>.`);
           return;
         }
-  
         const suggestions = `
           <div class="pros-suggestion">
             ${pros.map(p => `
@@ -224,9 +197,7 @@ const jobKnowledge = {
             `).join('')}
           </div>
         `;
-        
         addBotMessage(`✨ J'ai trouvé ${pros.length} pro${pros.length > 1 ? 's' : ''} qui peuvent t'aider :${suggestions}`);
-        
         setTimeout(() => {
           addBotMessage("Tu peux cliquer sur un pro pour voir son profil et réserver, ou me dire si tu as une autre question !");
           showQuickReplies(['📋 Voir tous les pros', '🗺️ Voir sur la carte', '✨ Autre problème']);

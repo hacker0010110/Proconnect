@@ -1,30 +1,24 @@
 let notifSound = null;
 let notifChannel = null;
 let lastNotifCount = 0;
-
 function playNotifSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
-    
     oscillator.connect(gainNode);
     gainNode.connect(ctx.destination);
-    
     oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(800, ctx.currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
-    
     gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-    
     oscillator.start(ctx.currentTime);
     oscillator.stop(ctx.currentTime + 0.3);
   } catch (e) {
     console.log('Son notif non disponible');
   }
 }
-
 function showToast(notif) {
   const icons = { info: '💬', success: '✅', warning: '⚠️', booking: '📅' };
   const colors = { 
@@ -33,7 +27,6 @@ function showToast(notif) {
     warning: '#F59E0B', 
     booking: '#7C3AED' 
   };
-  
   const toast = document.createElement('div');
   toast.style.cssText = `
     position: fixed;
@@ -53,7 +46,6 @@ function showToast(notif) {
     align-items: start;
     gap: 12px;
   `;
-  
   toast.innerHTML = `
     <div style="width: 40px; height: 40px; border-radius: 10px; background: ${colors[notif.type] || colors.info}25; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
       ${icons[notif.type] || icons.info}
@@ -64,24 +56,19 @@ function showToast(notif) {
     </div>
     <button onclick="this.parentElement.remove()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px;">×</button>
   `;
-  
   toast.onclick = (e) => {
     if (e.target.tagName !== 'BUTTON' && notif.link) {
       window.location.href = notif.link;
     }
   };
-  
   document.body.appendChild(toast);
-  
   setTimeout(() => {
     toast.style.animation = 'slideOutRight 0.4s ease-out';
     setTimeout(() => toast.remove(), 400);
   }, 5000);
 }
-
 function injectNotifStyles() {
   if (document.getElementById('notif-animations')) return;
-  
   const style = document.createElement('style');
   style.id = 'notif-animations';
   style.textContent = `
@@ -102,7 +89,6 @@ function injectNotifStyles() {
   `;
   document.head.appendChild(style);
 }
-
 function shakeNotifBell() {
   const bells = document.querySelectorAll('.fa-bell');
   bells.forEach(bell => {
@@ -110,22 +96,16 @@ function shakeNotifBell() {
     setTimeout(() => bell.parentElement.classList.remove('bell-ring'), 600);
   });
 }
-
 async function updateNavbarBadge() {
   const user = await getCurrentUser();
   if (!user) return;
-  
   const { data } = await db.from('notifications')
     .select('id').eq('user_id', user.id).eq('read', false);
-  
   const count = data?.length || 0;
-  
   const bellLink = document.querySelector('.fa-bell')?.parentElement;
   if (!bellLink) return;
-  
   const oldBadge = bellLink.querySelector('span');
   if (oldBadge) oldBadge.remove();
-  
   if (count > 0) {
     const badge = document.createElement('span');
     badge.style.cssText = 'position: absolute; top: 4px; right: 4px; background: var(--red); color: white; font-size: 10px; padding: 2px 6px; border-radius: 100px; font-weight: 700;';
@@ -133,15 +113,11 @@ async function updateNavbarBadge() {
     bellLink.appendChild(badge);
   }
 }
-
 async function initRealtimeNotifs() {
   const user = await getCurrentUser();
   if (!user) return;
-  
   injectNotifStyles();
-  
   if (notifChannel) db.removeChannel(notifChannel);
-  
   notifChannel = db.channel('realtime-notifs')
     .on('postgres_changes', {
       event: 'INSERT',
@@ -157,7 +133,6 @@ async function initRealtimeNotifs() {
     })
     .subscribe();
 }
-
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(initRealtimeNotifs, 1500);
 });

@@ -2,17 +2,14 @@ async function renderNavbar() {
     const user = await getCurrentUser();
     const navLinks = document.getElementById('navLinks');
     if (!navLinks) return;
-  
     if (user) {
       const path = user.role === 'professional' ? 'pro-dashboard.html' : 'profile.html';
-      
       const { data: notifs } = await db
         .from('notifications')
         .select('id')
         .eq('user_id', user.id)
         .eq('read', false);
       const unreadCount = notifs?.length || 0;
-  
       navLinks.innerHTML = `
         <a href="assistant.html" class="nav-link" style="background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(6,182,212,0.2)); color: var(--primary-light);"><i class="fa-solid fa-robot"></i> IA</a>
         <a href="map.html" class="nav-link"><i class="fa-solid fa-map"></i> Carte</a>

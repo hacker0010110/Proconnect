@@ -4,8 +4,6 @@ async function notify(userId, title, message, type = 'info', link = null) {
       title, message, type, link
     });
   }
-  
-  // Pour notifier le pro quand un client réserve (à appeler dans booking.html)
   async function notifyProBooking(proId, clientName) {
     const { data: pro } = await db.from('professionals').select('user_id').eq('id', proId).single();
     if (pro) {

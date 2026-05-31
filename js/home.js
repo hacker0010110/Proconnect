@@ -10,7 +10,6 @@ async function loadUser() {
       }
     }
   }
-  
   async function loadFeaturedPros() {
     const { data, error } = await db
       .from('professionals')
@@ -18,9 +17,7 @@ async function loadUser() {
       .eq('is_available', true)
       .order('rating', { ascending: false })
       .limit(6);
-  
     const grid = document.getElementById('prosGrid');
-    
     if (error || !data || data.length === 0) {
       grid.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted)">
@@ -29,14 +26,12 @@ async function loadUser() {
       `;
       return;
     }
-  
     const userLocation = await getUserLocation();
     let pros = data;
     if (userLocation && typeof enrichProsWithDistance === 'function') {
       pros = enrichProsWithDistance(data, userLocation);
       pros = sortByDistance(pros);
     }
-  
     grid.innerHTML = pros.map(pro => `
       <a href="booking.html?id=${pro.id}&name=${encodeURIComponent(pro.name)}&job=${encodeURIComponent(pro.job)}" class="pro-card">
         <div class="pro-header">
@@ -63,7 +58,6 @@ async function loadUser() {
       </a>
     `).join('');
   }
-  
   function handleSearch(e) {
     e.preventDefault();
     const query = document.getElementById('searchInput').value.trim();
@@ -71,6 +65,5 @@ async function loadUser() {
       window.location.href = `professionals.html?search=${encodeURIComponent(query)}`;
     }
   }
-  
   loadUser();
   loadFeaturedPros();
