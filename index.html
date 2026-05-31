@@ -11,6 +11,59 @@
     .category-card.transport { --cat-color-1: #F59E0B; --cat-color-2: #EF4444; }
     .category-card.coiffure { --cat-color-1: #EC4899; --cat-color-2: #F59E0B; }
     .category-card.esthetique { --cat-color-1: #EC4899; --cat-color-2: #8B5CF6; }
+
+    .quick-filters {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      display: none;
+      animation: fadeIn 0.4s ease-out;
+    }
+    .quick-filters.show { display: block; }
+    .quick-filters-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .quick-filter-group label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .quick-filter-group select,
+    .quick-filter-group input {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .quick-filter-group select:focus,
+    .quick-filter-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .price-display {
+      color: var(--primary-light);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    @media (max-width: 768px) {
+      .quick-filters-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .quick-filters-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -42,11 +95,57 @@
         <form class="search-container" onsubmit="handleSearch(event)">
           <i class="fa-solid fa-magnifying-glass search-icon"></i>
           <input type="text" class="search-bar" id="searchInput" 
-                 placeholder="Quel service cherches-tu ?">
+                 placeholder="Quel service cherches-tu ?"
+                 onfocus="showFilters()">
           <button type="submit" class="search-btn">
             <i class="fa-solid fa-arrow-right"></i>
           </button>
         </form>
+
+        <!-- Filtres rapides qui apparaissent au clic -->
+        <div class="quick-filters" id="quickFilters">
+          <div class="quick-filters-grid">
+            <div class="quick-filter-group">
+              <label><i class="fa-solid fa-briefcase"></i> Métier</label>
+              <select id="quickJob">
+                <option value="">Tous les métiers</option>
+                <option>Transport & Livraison</option>
+                <option>Plomberie</option>
+                <option>Électricité</option>
+                <option>Ménage</option>
+                <option>Jardinage</option>
+                <option>Peinture</option>
+                <option>Informatique</option>
+                <option>Mécanique</option>
+                <option>Maçonnerie</option>
+                <option>Menuiserie</option>
+                <option>Coiffure</option>
+                <option>Esthétique</option>
+              </select>
+            </div>
+            <div class="quick-filter-group">
+              <label><i class="fa-solid fa-location-dot"></i> Ville</label>
+              <select id="quickCity">
+                <option value="">Toutes les villes</option>
+                <option>Alger</option><option>Oran</option><option>Constantine</option>
+                <option>Annaba</option><option>Blida</option><option>Batna</option>
+                <option>Djelfa</option><option>Sétif</option><option>Sidi Bel Abbès</option>
+                <option>Biskra</option><option>Tébessa</option><option>Tlemcen</option>
+                <option>Béjaïa</option><option>Tiaret</option><option>Bordj Bou Arréridj</option>
+                <option>Skikda</option><option>Chlef</option><option>Médéa</option>
+                <option>Tizi Ouzou</option><option>Mostaganem</option><option>El Oued</option>
+                <option>Mascara</option><option>Ghardaïa</option><option>Boumerdès</option>
+              </select>
+            </div>
+            <div class="quick-filter-group">
+              <label><i class="fa-solid fa-coins"></i> Prix max <span class="price-display" id="priceDisplay">5000 DA/h</span></label>
+              <input type="range" id="quickPrice" min="500" max="5000" step="100" value="5000" oninput="updatePriceDisplay()">
+            </div>
+          </div>
+          <p style="font-size: 13px; color: var(--text-secondary); text-align: center;">
+            <i class="fa-solid fa-arrow-up"></i> Choisis tes critères puis clique sur la flèche pour lancer la recherche
+          </p>
+        </div>
 
         <a href="assistant.html" class="cta-pro" style="background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%); border-color: rgba(124, 58, 237, 0.3); margin-bottom: 16px;">
           <div class="cta-icon" style="background: linear-gradient(135deg, var(--primary) 0%, var(--cyan) 100%);">
@@ -141,5 +240,32 @@
   <script src="js/realtime-notifs.js"></script>
   <script src="js/geolocation.js"></script>
   <script src="js/home.js"></script>
+  <script>
+    function showFilters() {
+      document.getElementById('quickFilters').classList.add('show');
+    }
+
+    function updatePriceDisplay() {
+      const val = document.getElementById('quickPrice').value;
+      document.getElementById('priceDisplay').textContent = `${val} DA/h`;
+    }
+
+    // Override handleSearch pour inclure les filtres
+    function handleSearch(e) {
+      e.preventDefault();
+      const query = document.getElementById('searchInput').value.trim();
+      const job = document.getElementById('quickJob').value;
+      const city = document.getElementById('quickCity').value;
+      const price = document.getElementById('quickPrice').value;
+
+      const params = new URLSearchParams();
+      if (query) params.set('search', query);
+      if (job) params.set('job', job);
+      if (city) params.set('city', city);
+      if (price && price < 5000) params.set('maxPrice', price);
+
+      window.location.href = `professionals.html?${params.toString()}`;
+    }
+  </script>
 </body>
 </html>

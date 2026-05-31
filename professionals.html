@@ -125,29 +125,36 @@
     let minRating = 0;
 
     async function loadPros() {
-      const { data } = await db.from('professionals').select('*').eq('is_available', true);
-      allPros = data || [];
+  const { data } = await db.from('professionals').select('*').eq('is_available', true);
+  allPros = data || [];
 
-      const userLocation = await getUserLocation();
-      if (userLocation) {
-        allPros = enrichProsWithDistance(allPros, userLocation);
-      }
+  const userLocation = await getUserLocation();
+  if (userLocation) {
+    allPros = enrichProsWithDistance(allPros, userLocation);
+  }
 
-      const cities = [...new Set(allPros.map(p => p.city))].sort();
-      document.getElementById('cityFilter').innerHTML = '<option value="">Toutes</option>' +
-        cities.map(c => `<option>${c}</option>`).join('');
+  const cities = [...new Set(allPros.map(p => p.city))].sort();
+  document.getElementById('cityFilter').innerHTML = '<option value="">Toutes</option>' +
+    cities.map(c => `<option>${c}</option>`).join('');
 
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('job')) {
-        document.getElementById('jobFilter').value = params.get('job');
-        document.getElementById('pageTitle').textContent = params.get('job');
-      }
-      if (params.get('search')) {
-        document.getElementById('searchInput').value = params.get('search');
-      }
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('job')) {
+    document.getElementById('jobFilter').value = params.get('job');
+    document.getElementById('pageTitle').textContent = params.get('job');
+  }
+  if (params.get('city')) {
+    document.getElementById('cityFilter').value = params.get('city');
+  }
+  if (params.get('maxPrice')) {
+    document.getElementById('priceFilter').value = params.get('maxPrice');
+    updatePriceLabel();
+  }
+  if (params.get('search')) {
+    document.getElementById('searchInput').value = params.get('search');
+  }
 
-      applyFilters();
-    }
+  applyFilters();
+}
 
     function setRating(rating) {
       minRating = rating;
