@@ -102,7 +102,6 @@
           </button>
         </form>
 
-        <!-- Filtres rapides qui apparaissent au clic -->
         <div class="quick-filters" id="quickFilters">
           <div class="quick-filters-grid">
             <div class="quick-filter-group">
@@ -171,7 +170,7 @@
       <div class="hero-right">
         <div class="section-header">
           <h3 class="section-title">Explore par catégorie</h3>
-          <a href="professionals.html" class="section-link">Voir tout →</a>
+          <a href="categories.html" class="section-link">Voir tout →</a>
         </div>
 
         <div class="categories-grid stagger-children">
@@ -226,7 +225,7 @@
     <section class="section">
       <div class="section-header">
         <h3 class="section-title">⭐ Pros populaires</h3>
-        <a href="categories.html" class="section-link">Voir tout →</a>
+        <a href="professionals.html" class="section-link">Voir tout →</a>
       </div>
       <div class="pros-grid stagger-children" id="prosGrid">
         <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted)">Chargement...</div>
@@ -250,7 +249,6 @@
       document.getElementById('priceDisplay').textContent = `${val} DA/h`;
     }
 
-    // Override handleSearch pour inclure les filtres
     function handleSearch(e) {
       e.preventDefault();
       const query = document.getElementById('searchInput').value.trim();
