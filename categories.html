@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toutes les catégories — ProConnect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .category-card.transport { --cat-color-1: #F59E0B; --cat-color-2: #EF4444; }
+    .category-card.coiffure { --cat-color-1: #EC4899; --cat-color-2: #F59E0B; }
+    .category-card.esthetique { --cat-color-1: #EC4899; --cat-color-2: #8B5CF6; }
+    .category-card.cuisine { --cat-color-1: #F97316; --cat-color-2: #EF4444; }
+    .category-card.climatisation { --cat-color-1: #0EA5E9; --cat-color-2: #06B6D4; }
+    .category-card.demenagement { --cat-color-1: #8B5CF6; --cat-color-2: #6366F1; }
+    .category-card.vitrerie { --cat-color-1: #14B8A6; --cat-color-2: #06B6D4; }
+
+    .all-categories-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .big-category-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+    }
+    .big-category-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, var(--cat-color-1) 0%, var(--cat-color-2) 100%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .big-category-card:hover::before { opacity: 0.15; }
+    .big-category-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: var(--cat-color-1);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    }
+    .big-category-card > * { position: relative; z-index: 1; }
+    .big-category-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, var(--cat-color-1) 0%, var(--cat-color-2) 100%);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: white;
+      transition: all 0.4s;
+    }
+    .big-category-card:hover .big-category-icon {
+      transform: rotate(-10deg) scale(1.15);
+    }
+    .big-category-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .big-category-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .big-category-count {
+      display: inline-block;
+      margin-top: 12px;
+      background: var(--bg-surface);
+      color: var(--primary-light);
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 968px) {
+      .all-categories-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .all-categories-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .big-category-card { padding: 20px 16px; }
+      .big-category-icon { width: 56px; height: 56px; font-size: 24px; }
+      .big-category-name { font-size: 15px; }
+    }
+    @media (max-width: 480px) {
+      .all-categories-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo" onclick="location.href='index.html'">ProConnect</div>
+    <div class="nav-links" id="navLinks"></div>
+  </nav>
+
+  <main class="main">
+    <a href="index.html" class="back-link">
+      <i class="fa-solid fa-arrow-left"></i> Retour à l'accueil
+    </a>
+
+    <div style="text-align: center; margin-bottom: 40px;">
+      <h1 style="font-size: 40px; font-weight: 800; margin-bottom: 12px;">
+        Toutes nos <span style="background: linear-gradient(135deg, var(--primary), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">catégories</span>
+      </h1>
+      <p style="color: var(--text-secondary); font-size: 16px;">
+        Trouve le bon professionnel pour chaque besoin
+      </p>
+    </div>
+
+    <div class="all-categories-grid stagger-children">
+      <a href="professionals.html?job=Transport %26 Livraison" class="big-category-card transport">
+        <div class="big-category-icon"><i class="fa-solid fa-truck"></i></div>
+        <div class="big-category-name">Transport & Livraison</div>
+        <div class="big-category-desc">Déménagement, livraison, transport</div>
+        <span class="big-category-count">⭐ Top demande</span>
+      </a>
+
+      <a href="professionals.html?job=Plomberie" class="big-category-card plomberie">
+        <div class="big-category-icon"><i class="fa-solid fa-droplet"></i></div>
+        <div class="big-category-name">Plomberie</div>
+        <div class="big-category-desc">Fuites, robinets, canalisations</div>
+        <span class="big-category-count">120+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Électricité" class="big-category-card electricite">
+        <div class="big-category-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div class="big-category-name">Électricité</div>
+        <div class="big-category-desc">Installation, dépannage, panne</div>
+        <span class="big-category-count">95+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Ménage" class="big-category-card menage">
+        <div class="big-category-icon"><i class="fa-solid fa-broom"></i></div>
+        <div class="big-category-name">Ménage</div>
+        <div class="big-category-desc">Nettoyage maison, bureaux</div>
+        <span class="big-category-count">200+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Jardinage" class="big-category-card jardinage">
+        <div class="big-category-icon"><i class="fa-solid fa-seedling"></i></div>
+        <div class="big-category-name">Jardinage</div>
+        <div class="big-category-desc">Tonte, taille, entretien</div>
+        <span class="big-category-count">80+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Peinture" class="big-category-card peinture">
+        <div class="big-category-icon"><i class="fa-solid fa-paint-roller"></i></div>
+        <div class="big-category-name">Peinture</div>
+        <div class="big-category-desc">Intérieur, extérieur, décoration</div>
+        <span class="big-category-count">110+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Informatique" class="big-category-card informatique">
+        <div class="big-category-icon"><i class="fa-solid fa-laptop-code"></i></div>
+        <div class="big-category-name">Informatique</div>
+        <div class="big-category-desc">PC, réseau, logiciels</div>
+        <span class="big-category-count">60+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Mécanique" class="big-category-card mecanique">
+        <div class="big-category-icon"><i class="fa-solid fa-wrench"></i></div>
+        <div class="big-category-name">Mécanique</div>
+        <div class="big-category-desc">Voiture, moteur, freins</div>
+        <span class="big-category-count">75+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Maçonnerie" class="big-category-card maconnerie">
+        <div class="big-category-icon"><i class="fa-solid fa-trowel-bricks"></i></div>
+        <div class="big-category-name">Maçonnerie</div>
+        <div class="big-category-desc">Construction, fondations, dalles</div>
+        <span class="big-category-count">45+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Menuiserie" class="big-category-card menuiserie">
+        <div class="big-category-icon"><i class="fa-solid fa-hammer"></i></div>
+        <div class="big-category-name">Menuiserie</div>
+        <div class="big-category-desc">Bois, meubles, parquet</div>
+        <span class="big-category-count">55+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Climatisation" class="big-category-card climatisation">
+        <div class="big-category-icon"><i class="fa-solid fa-snowflake"></i></div>
+        <div class="big-category-name">Climatisation</div>
+        <div class="big-category-desc">Clim, chauffage, ventilation</div>
+        <span class="big-category-count">40+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Déménagement" class="big-category-card demenagement">
+        <div class="big-category-icon"><i class="fa-solid fa-boxes-packing"></i></div>
+        <div class="big-category-name">Déménagement</div>
+        <div class="big-category-desc">Cartons, transport, montage</div>
+        <span class="big-category-count">65+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Coiffure" class="big-category-card coiffure">
+        <div class="big-category-icon"><i class="fa-solid fa-scissors"></i></div>
+        <div class="big-category-name">Coiffure</div>
+        <div class="big-category-desc">Coupe, couleur, brushing</div>
+        <span class="big-category-count">90+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Esthétique" class="big-category-card esthetique">
+        <div class="big-category-icon"><i class="fa-solid fa-spa"></i></div>
+        <div class="big-category-name">Esthétique</div>
+        <div class="big-category-desc">Manucure, soins, maquillage</div>
+        <span class="big-category-count">70+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Cuisine" class="big-category-card cuisine">
+        <div class="big-category-icon"><i class="fa-solid fa-utensils"></i></div>
+        <div class="big-category-name">Cuisine</div>
+        <div class="big-category-desc">Traiteur, chef à domicile</div>
+        <span class="big-category-count">35+ pros</span>
+      </a>
+
+      <a href="professionals.html?job=Vitrerie" class="big-category-card vitrerie">
+        <div class="big-category-icon"><i class="fa-solid fa-window-maximize"></i></div>
+        <div class="big-category-name">Vitrerie</div>
+        <div class="big-category-desc">Vitres, fenêtres, miroirs</div>
+        <span class="big-category-count">30+ pros</span>
+      </a>
+    </div>
+
+    <div style="text-align: center; padding: 40px 20px; background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.1)); border-radius: 20px; border: 1px solid var(--border);">
+      <h2 style="font-size: 24px; margin-bottom: 12px;">Tu ne trouves pas ton service ?</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">Notre Assistant IA peut t'aider à trouver le bon pro</p>
+      <a href="assistant.html" class="btn btn-primary">
+        <i class="fa-solid fa-robot"></i> Discuter avec l'Assistant IA
+      </a>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/navbar.js"></script>
+  <script src="js/realtime-notifs.js"></script>
+</body>
+</html>
