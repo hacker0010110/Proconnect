@@ -48,39 +48,29 @@
       background: rgba(124, 58, 237, 0.1);
     }
     .vehicle-toggle input { accent-color: var(--primary); width: 18px; height: 18px; }
-    .back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--text-secondary);
-      text-decoration: none;
-      padding: 8px 14px;
-      border-radius: 8px;
-      transition: all 0.2s;
-      font-size: 14px;
+    .password-strength {
+      font-size: 12px;
+      margin-top: 6px;
+      display: none;
     }
-    .back-btn:hover { background: var(--bg-card); color: var(--text-primary); }
+    .password-strength.show { display: block; }
+    .match-ok { color: var(--green); }
+    .match-error { color: var(--red); }
   </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="logo" onclick="location.href='index.html'">ProConnect</div>
-        <div class="nav-links">
-          <a href="index.html" class="back-link" style="margin: 0;">
-            <i class="fa-solid fa-arrow-left"></i> Accueil
-          </a>
-          <a href="login.html" class="btn btn-secondary">Connexion</a>
-        </div>
-      </nav>
-    
-
+  <nav class="navbar">
+    <div class="logo" onclick="location.href='index.html'">ProConnect</div>
+    <div class="nav-links">
+      <a href="index.html" class="back-link" style="margin: 0;">
+        <i class="fa-solid fa-arrow-left"></i> Accueil
+      </a>
+      <a href="login.html" class="btn btn-secondary">Connexion</a>
+    </div>
+  </nav>
 
   <div class="auth-container">
     <div class="auth-card" style="max-width: 540px;">
-      <a href="javascript:history.back()" class="back-btn" style="margin-bottom: 16px;">
-        <i class="fa-solid fa-arrow-left"></i> Retour
-      </a>
-
       <h1 class="auth-title">Créer un compte ✨</h1>
       <p class="auth-subtitle">Rejoins ProConnect en quelques secondes</p>
 
@@ -112,7 +102,13 @@
 
         <div class="form-group">
           <label class="form-label">Mot de passe (6 caractères min.)</label>
-          <input type="password" id="password" class="form-input" placeholder="••••••••" required minlength="6">
+          <input type="password" id="password" class="form-input" placeholder="••••••••" required minlength="6" oninput="checkPasswordMatch()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirmer le mot de passe</label>
+          <input type="password" id="confirmPassword" class="form-input" placeholder="••••••••" required oninput="checkPasswordMatch()">
+          <div class="password-strength" id="passwordMatch"></div>
         </div>
 
         <div id="proFields" style="display: none;">
@@ -199,6 +195,26 @@
       toggle.classList.toggle('active', checked);
     }
 
+    function checkPasswordMatch() {
+      const password = document.getElementById('password').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      const matchDiv = document.getElementById('passwordMatch');
+      
+      if (confirm.length === 0) {
+        matchDiv.classList.remove('show');
+        return;
+      }
+      
+      matchDiv.classList.add('show');
+      if (password === confirm) {
+        matchDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> Les mots de passe correspondent';
+        matchDiv.className = 'password-strength show match-ok';
+      } else {
+        matchDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Les mots de passe ne correspondent pas';
+        matchDiv.className = 'password-strength show match-error';
+      }
+    }
+
     function showError(msg) {
       const err = document.getElementById('errorMsg');
       err.textContent = msg;
@@ -219,6 +235,15 @@
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
+      const confirmPassword = document.getElementById('confirmPassword').value.trim();
+
+      if (password !== confirmPassword) {
+        return showError("Les mots de passe ne correspondent pas");
+      }
+
+      if (password.length < 6) {
+        return showError("Le mot de passe doit faire au moins 6 caractères");
+      }
 
       let selectedJobs = [];
       if (selectedRole === 'professional') {
@@ -231,14 +256,17 @@
       setLoading(true);
 
       try {
+        // 1. Crée le compte auth
         const { data, error } = await db.auth.signUp({ email, password });
         if (error) throw error;
         if (!data.user) throw new Error("Création échouée");
 
+        // 2. Insère dans users
         await db.from('users').insert({
           id: data.user.id, name, email, role: selectedRole
         });
 
+        // 3. Si pro, insère dans professionals
         if (selectedRole === 'professional') {
           const city = document.getElementById('city').value;
           const price = parseFloat(document.getElementById('price').value) || null;
@@ -254,7 +282,14 @@
             rating: 0, review_count: 0,
             is_available: true, status: 'active'
           });
+        }
 
+        // 4. Connecte automatiquement (si la confirmation email est désactivée, c'est déjà fait par signUp)
+        // On force une connexion pour s'assurer que la session est bien établie
+        await db.auth.signInWithPassword({ email, password });
+
+        // 5. Redirige vers la bonne page
+        if (selectedRole === 'professional') {
           window.location.href = 'pro-dashboard.html';
         } else {
           window.location.href = 'index.html';
