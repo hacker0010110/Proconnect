@@ -123,7 +123,7 @@
 
     <div id="header" style="min-height: 90px;"></div>
 
-    <div class="pro-tabs">
+    <div class="pro-tabs" id="proTabs">
       <div class="pro-tab active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</div>
       <div class="pro-tab" data-tab="requests" onclick="switchTab('requests')">🔔 Demandes</div>
       <div class="pro-tab" data-tab="availability" onclick="switchTab('availability')">⚙️ Disponibilité</div>
@@ -165,28 +165,44 @@
         return;
       }
 
-      // Lance les 3 requêtes en parallèle dès le début
-      const [proRes, bookingsRes, reviewsRes] = await Promise.all([
-        db.from('professionals').select('*').eq('user_id', currentUser.id).single(),
-        db.from('bookings').select('*').eq('professional_id', '00000000-0000-0000-0000-000000000000'),
-        db.from('reviews').select('rating').eq('professional_id', '00000000-0000-0000-0000-000000000000')
-      ]);
+      const { data: proRes } = await db.from('professionals')
+        .select('*').eq('user_id', currentUser.id).maybeSingle();
 
-      proData = proRes.data;
+      if (!proRes) {
+        document.getElementById('proTabs').style.display = 'none';
+        document.getElementById('header').innerHTML = `
+          <div style="background: var(--bg-card); border: 1px solid var(--orange); border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 24px;">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 56px; color: var(--orange); margin-bottom: 20px;"></i>
+            <h2 style="margin-bottom: 12px; font-size: 24px;">Profil professionnel introuvable</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
+              Ton compte est marqué comme professionnel mais aucun profil pro n'est associé.
+              Cela peut arriver si l'inscription a été interrompue. Contacte l'administrateur ou crée un nouveau compte pro depuis l'inscription.
+            </p>
+            <a href="register.html?role=pro" class="btn btn-primary">
+              <i class="fa-solid fa-user-plus"></i> Créer un compte pro
+            </a>
+            <a href="index.html" class="btn btn-secondary" style="margin-left: 10px;">
+              <i class="fa-solid fa-arrow-left"></i> Accueil
+            </a>
+          </div>
+        `;
+        document.getElementById('tabContent').innerHTML = '';
+        return;
+      }
+
+      proData = proRes;
       renderHeader();
 
-      // Maintenant qu'on a le vrai pro id, on relance bookings/reviews
-      const [realBookings, realReviews] = await Promise.all([
+      const [bookingsRes, reviewsRes] = await Promise.all([
         db.from('bookings').select('*').eq('professional_id', proData.id),
         db.from('reviews').select('rating').eq('professional_id', proData.id)
       ]);
 
-      cachedBookings = realBookings.data || [];
-      cachedReviews = realReviews.data || [];
+      cachedBookings = bookingsRes.data || [];
+      cachedReviews = reviewsRes.data || [];
 
       renderDashboard();
 
-      // Realtime pour mises à jour
       db.channel('pro-bookings')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `professional_id=eq.${proData.id}` },
           async () => {
@@ -213,6 +229,7 @@
     }
 
     async function switchTab(tab) {
+      if (!proData) return;
       currentTab = tab;
       document.querySelectorAll('.pro-tab').forEach(t => t.classList.remove('active'));
       document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
