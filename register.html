@@ -246,9 +246,15 @@
       }
 
       let selectedJobs = [];
+      let city = '';
+      let price = null;
+      let hasVehicle = false;
+
       if (selectedRole === 'professional') {
         selectedJobs = Array.from(document.querySelectorAll('#jobsGrid input:checked')).map(cb => cb.value);
-        const city = document.getElementById('city').value;
+        city = document.getElementById('city').value;
+        price = parseFloat(document.getElementById('price').value) || null;
+        hasVehicle = document.getElementById('hasVehicle').checked;
         if (selectedJobs.length === 0) return showError("Coche au moins un métier");
         if (!city) return showError("Sélectionne ta ville");
       }
@@ -256,39 +262,45 @@
       setLoading(true);
 
       try {
-        // 1. Crée le compte auth
         const { data, error } = await db.auth.signUp({ email, password });
         if (error) throw error;
         if (!data.user) throw new Error("Création échouée");
 
-        // 2. Insère dans users
-        await db.from('users').insert({
-          id: data.user.id, name, email, role: selectedRole
+        const userId = data.user.id;
+
+        const { error: userError } = await db.from('users').insert({
+          id: userId, name, email, role: selectedRole
         });
 
-        // 3. Si pro, insère dans professionals
-        if (selectedRole === 'professional') {
-          const city = document.getElementById('city').value;
-          const price = parseFloat(document.getElementById('price').value) || null;
-          const hasVehicle = document.getElementById('hasVehicle').checked;
+        if (userError) {
+          console.error('Erreur insert users:', userError);
+          throw new Error("Erreur lors de la création du profil utilisateur");
+        }
 
-          await db.from('professionals').insert({
-            user_id: data.user.id,
+        if (selectedRole === 'professional') {
+          const { error: proError } = await db.from('professionals').insert({
+            user_id: userId,
             name,
             job: selectedJobs[0],
             specialties: selectedJobs,
-            city, price_per_hour: price,
+            city,
+            price_per_hour: price,
             has_vehicle: hasVehicle,
-            rating: 0, review_count: 0,
-            is_available: true, status: 'active'
+            rating: 0,
+            review_count: 0,
+            is_available: true,
+            status: 'active'
           });
+
+          if (proError) {
+            console.error('Erreur insert professionals:', proError);
+            await db.from('users').delete().eq('id', userId);
+            throw new Error("Erreur lors de la création du profil pro. Réessaie !");
+          }
         }
 
-        // 4. Connecte automatiquement (si la confirmation email est désactivée, c'est déjà fait par signUp)
-        // On force une connexion pour s'assurer que la session est bien établie
         await db.auth.signInWithPassword({ email, password });
 
-        // 5. Redirige vers la bonne page
         if (selectedRole === 'professional') {
           window.location.href = 'pro-dashboard.html';
         } else {
