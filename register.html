@@ -132,7 +132,7 @@
               <label class="job-checkbox"><input type="checkbox" value="Cuisine"> 🍳 Cuisine</label>
               <label class="job-checkbox"><input type="checkbox" value="Vitrerie"> 🪟 Vitrerie</label>
             </div>
-            <p style="font-size: 12px; color: var(--text-muted);">Le premier métier coché sera ton métier principal</p>
+            <p style="font-size: 12px; color: var(--text-muted);">Tu apparaîtras dans toutes les recherches correspondant à tes métiers cochés</p>
           </div>
 
           <div class="form-group">
@@ -278,10 +278,10 @@
         }
 
         if (selectedRole === 'professional') {
-          const { error: proError } = await db.from('professionals').insert({
+          const professionalsToInsert = selectedJobs.map(job => ({
             user_id: userId,
             name,
-            job: selectedJobs[0],
+            job: job,
             specialties: selectedJobs,
             city,
             price_per_hour: price,
@@ -290,7 +290,9 @@
             review_count: 0,
             is_available: true,
             status: 'active'
-          });
+          }));
+
+          const { error: proError } = await db.from('professionals').insert(professionalsToInsert);
 
           if (proError) {
             console.error('Erreur insert professionals:', proError);
