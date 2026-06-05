@@ -39,7 +39,20 @@
       font-weight: 800;
       color: white;
       font-size: 20px;
+      position: relative;
     }
+    .avatar-status-dot {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-surface);
+      transition: background 0.3s ease;
+    }
+    .avatar-status-dot.online { background: var(--green); }
+    .avatar-status-dot.offline { background: var(--text-muted); }
     .chat-header-info h3 { font-size: 18px; }
     .chat-header-info p { font-size: 13px; color: var(--text-secondary); }
     .chat-status {
@@ -47,13 +60,22 @@
       align-items: center;
       gap: 5px;
       font-size: 12px;
-      color: var(--green);
+      margin-left: 6px;
+      transition: color 0.3s ease;
     }
+    .chat-status.online { color: var(--green); }
+    .chat-status.offline { color: var(--text-muted); }
     .chat-status::before {
       content: '';
       width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--green);
+      background: currentColor;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .chat-status.offline::before { animation: none; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
     }
     .chat-messages {
       flex: 1;
@@ -158,7 +180,6 @@
     <a href="javascript:history.back()" class="back-link">
         <i class="fa-solid fa-arrow-left"></i> Retour
       </a>
-   
 
     <div id="bookingInfo" class="booking-info" style="display: none;"></div>
 
@@ -183,6 +204,8 @@
     let booking = null;
     let otherUser = null;
     let messagesChannel = null;
+    let presenceChannel = null;
+    let isOtherOnline = false;
 
     async function init() {
       currentUser = await requireAuth();
@@ -194,7 +217,6 @@
         return;
       }
 
-      // Charge la réservation
       const { data: b } = await db.from('bookings').select('*').eq('id', bookingId).single();
       if (!b) {
         alert('Réservation introuvable');
@@ -203,16 +225,13 @@
       }
       booking = b;
 
-      // Détermine l'autre utilisateur (client ou pro)
       const isClient = currentUser.id === b.client_id;
       let otherUserId;
       
       if (isClient) {
-        // Si je suis le client, l'autre c'est le pro
         const { data: pro } = await db.from('professionals').select('user_id').eq('id', b.professional_id).single();
         otherUserId = pro?.user_id;
       } else {
-        // Si je suis le pro, l'autre c'est le client
         otherUserId = b.client_id;
       }
 
@@ -225,18 +244,38 @@
       renderBookingInfo();
       await loadMessages();
       subscribeRealtime();
+      subscribePresence();
     }
 
     function renderHeader() {
       const name = otherUser?.name || 'Utilisateur';
       const role = otherUser?.role === 'professional' ? 'Professionnel' : 'Client';
+      const statusClass = isOtherOnline ? 'online' : 'offline';
+      const statusText = isOtherOnline ? 'En ligne' : 'Hors ligne';
       document.getElementById('chatHeader').innerHTML = `
-        <div class="chat-avatar">${name[0].toUpperCase()}</div>
+        <div class="chat-avatar">
+          ${name[0].toUpperCase()}
+          <span class="avatar-status-dot ${statusClass}" id="avatarDot"></span>
+        </div>
         <div class="chat-header-info">
           <h3>${name}</h3>
-          <p>${role} <span class="chat-status">En ligne</span></p>
+          <p>${role} <span class="chat-status ${statusClass}" id="statusText">${statusText}</span></p>
         </div>
       `;
+    }
+
+    function updateOnlineStatus(online) {
+      isOtherOnline = online;
+      const dot = document.getElementById('avatarDot');
+      const text = document.getElementById('statusText');
+      if (!dot || !text) return;
+      
+      dot.classList.remove('online', 'offline');
+      dot.classList.add(online ? 'online' : 'offline');
+      
+      text.classList.remove('online', 'offline');
+      text.classList.add(online ? 'online' : 'offline');
+      text.textContent = online ? 'En ligne' : 'Hors ligne';
     }
 
     function renderBookingInfo() {
@@ -304,7 +343,6 @@
         `;
       }).join('');
 
-      // Scroll en bas
       container.scrollTop = container.scrollHeight;
     }
 
@@ -324,7 +362,6 @@
           content
         });
 
-        // Notifie l'autre utilisateur
         if (otherUser) {
           await db.from('notifications').insert({
             user_id: otherUser.id,
@@ -354,6 +391,48 @@
         }, () => loadMessages())
         .subscribe();
     }
+
+    function subscribePresence() {
+      if (presenceChannel) db.removeChannel(presenceChannel);
+
+      presenceChannel = db.channel(`presence-${booking.id}`, {
+        config: { presence: { key: currentUser.id } }
+      });
+
+      presenceChannel
+        .on('presence', { event: 'sync' }, () => {
+          const state = presenceChannel.presenceState();
+          const onlineUserIds = Object.keys(state);
+          const otherOnline = otherUser && onlineUserIds.includes(otherUser.id);
+          updateOnlineStatus(otherOnline);
+        })
+        .on('presence', { event: 'join' }, ({ key }) => {
+          if (otherUser && key === otherUser.id) {
+            updateOnlineStatus(true);
+          }
+        })
+        .on('presence', { event: 'leave' }, ({ key }) => {
+          if (otherUser && key === otherUser.id) {
+            updateOnlineStatus(false);
+          }
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await presenceChannel.track({
+              user_id: currentUser.id,
+              name: currentUser.name,
+              online_at: new Date().toISOString()
+            });
+          }
+        });
+    }
+
+    window.addEventListener('beforeunload', () => {
+      if (presenceChannel) {
+        presenceChannel.untrack();
+        db.removeChannel(presenceChannel);
+      }
+    });
 
     init();
   </script>
