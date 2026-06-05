@@ -139,16 +139,75 @@
             <label class="form-label">Ta ville</label>
             <select id="city" class="form-select">
               <option value="">Sélectionne ta ville</option>
-              <option>Alger</option><option>Oran</option><option>Constantine</option>
-              <option>Annaba</option><option>Blida</option><option>Batna</option>
-              <option>Djelfa</option><option>Sétif</option><option>Sidi Bel Abbès</option>
-              <option>Biskra</option><option>Tébessa</option><option>Tlemcen</option>
-              <option>Béjaïa</option><option>Tiaret</option><option>Bordj Bou Arréridj</option>
-              <option>Skikda</option><option>Chlef</option><option>Souk Ahras</option>
-              <option>Médéa</option><option>El Eulma</option><option>Tizi Ouzou</option>
-              <option>Mostaganem</option><option>El Oued</option><option>Béchar</option>
-              <option>Mascara</option><option>Saïda</option><option>Khenchela</option>
-              <option>Guelma</option><option>Ghardaïa</option><option>Boumerdès</option>
+              <optgroup label="🌟 Tizi Ouzou (wilaya)">
+                <option>Tizi Ouzou</option>
+                <option>Aïn El Hammam</option>
+                <option>Larbaâ Nath Irathen</option>
+                <option>Beni Yenni</option>
+                <option>Azazga</option>
+                <option>Tigzirt</option>
+                <option>Azeffoun</option>
+                <option>Bouzeguène</option>
+                <option>Boghni</option>
+                <option>Ouadhias</option>
+                <option>Béni Douala</option>
+                <option>Draâ Ben Khedda</option>
+              </optgroup>
+              <optgroup label="🌿 Béjaïa (wilaya)">
+                <option>Béjaïa</option>
+                <option>Akbou</option>
+                <option>Aokas</option>
+                <option>El Kseur</option>
+                <option>Sidi Aïch</option>
+                <option>Tazmalt</option>
+              </optgroup>
+              <optgroup label="🏔️ Bouira (wilaya)">
+                <option>Bouira</option>
+                <option>Lakhdaria</option>
+                <option>M'Chedallah</option>
+                <option>Aïn Bessem</option>
+              </optgroup>
+              <optgroup label="📍 Centre">
+                <option>Alger</option>
+                <option>Blida</option>
+                <option>Boumerdès</option>
+                <option>Bordj Menaiel</option>
+                <option>Tipaza</option>
+                <option>Médéa</option>
+                <option>Aïn Defla</option>
+                <option>Djelfa</option>
+              </optgroup>
+              <optgroup label="📍 Est">
+                <option>Constantine</option>
+                <option>Annaba</option>
+                <option>Sétif</option>
+                <option>Batna</option>
+                <option>El Eulma</option>
+                <option>Bordj Bou Arréridj</option>
+                <option>Skikda</option>
+                <option>Souk Ahras</option>
+                <option>Guelma</option>
+                <option>Khenchela</option>
+                <option>Tébessa</option>
+                <option>Biskra</option>
+              </optgroup>
+              <optgroup label="📍 Ouest">
+                <option>Oran</option>
+                <option>Tlemcen</option>
+                <option>Sidi Bel Abbès</option>
+                <option>Mostaganem</option>
+                <option>Mascara</option>
+                <option>Relizane</option>
+                <option>Aïn Témouchent</option>
+                <option>Tiaret</option>
+                <option>Chlef</option>
+                <option>Saïda</option>
+              </optgroup>
+              <optgroup label="📍 Sud">
+                <option>Ghardaïa</option>
+                <option>El Oued</option>
+                <option>Béchar</option>
+              </optgroup>
             </select>
           </div>
 
@@ -183,16 +242,61 @@
     let selectedRole = 'client';
 
     const cityCoords = {
-      'Alger': [36.7372, 3.0865], 'Oran': [35.6976, -0.6337], 'Constantine': [36.3650, 6.6147],
-      'Annaba': [36.9000, 7.7667], 'Blida': [36.4203, 2.8277], 'Batna': [35.5559, 6.1741],
-      'Djelfa': [34.6753, 3.2547], 'Sétif': [36.1900, 5.4133], 'Sidi Bel Abbès': [35.1878, -0.6308],
-      'Biskra': [34.8500, 5.7333], 'Tébessa': [35.4044, 8.1242], 'Tlemcen': [34.8783, -1.3150],
-      'Béjaïa': [36.7558, 5.0840], 'Tiaret': [35.3705, 1.3170], 'Bordj Bou Arréridj': [36.0731, 4.7608],
-      'Skikda': [36.8758, 6.9094], 'Chlef': [36.1656, 1.3344], 'Souk Ahras': [36.2867, 7.9511],
-      'Médéa': [36.2654, 2.7539], 'El Eulma': [36.1500, 5.6833], 'Tizi Ouzou': [36.7117, 4.0500],
-      'Mostaganem': [35.9314, 0.0894], 'El Oued': [33.3683, 6.8675], 'Béchar': [31.6177, -2.2167],
-      'Mascara': [35.3964, 0.1411], 'Saïda': [34.8303, 0.1517], 'Khenchela': [35.4358, 7.1408],
-      'Guelma': [36.4625, 7.4283], 'Ghardaïa': [32.4847, 3.6736], 'Boumerdès': [36.7669, 3.4778]
+      'Tizi Ouzou': [36.7117, 4.0500],
+      'Aïn El Hammam': [36.5667, 4.3000],
+      'Larbaâ Nath Irathen': [36.6333, 4.2000],
+      'Beni Yenni': [36.6167, 4.2500],
+      'Azazga': [36.5167, 4.6833],
+      'Tigzirt': [36.8908, 4.1217],
+      'Azeffoun': [36.8939, 4.4253],
+      'Bouzeguène': [36.6500, 4.5167],
+      'Boghni': [36.5333, 3.9500],
+      'Ouadhias': [36.4833, 4.0833],
+      'Béni Douala': [36.6333, 4.0500],
+      'Draâ Ben Khedda': [36.6500, 4.1500],
+      'Béjaïa': [36.7558, 5.0840],
+      'Akbou': [36.4567, 4.5419],
+      'Aokas': [36.6383, 5.2503],
+      'El Kseur': [36.6803, 4.8567],
+      'Sidi Aïch': [36.6111, 4.6889],
+      'Tazmalt': [36.3667, 4.4167],
+      'Bouira': [36.3736, 3.9019],
+      'Lakhdaria': [36.5667, 3.6833],
+      "M'Chedallah": [36.3833, 4.3000],
+      'Aïn Bessem': [36.3000, 3.6667],
+      'Alger': [36.7372, 3.0865],
+      'Blida': [36.4203, 2.8277],
+      'Boumerdès': [36.7669, 3.4778],
+      'Bordj Menaiel': [36.4564, 4.1839],
+      'Tipaza': [36.5944, 2.4475],
+      'Médéa': [36.2654, 2.7539],
+      'Aïn Defla': [36.2647, 1.9678],
+      'Djelfa': [34.6753, 3.2547],
+      'Constantine': [36.3650, 6.6147],
+      'Annaba': [36.9000, 7.7667],
+      'Sétif': [36.1900, 5.4133],
+      'Batna': [35.5559, 6.1741],
+      'El Eulma': [36.1500, 5.6833],
+      'Bordj Bou Arréridj': [36.0731, 4.7608],
+      'Skikda': [36.8758, 6.9094],
+      'Souk Ahras': [36.2867, 7.9511],
+      'Guelma': [36.4625, 7.4283],
+      'Khenchela': [35.4358, 7.1408],
+      'Tébessa': [35.4044, 8.1242],
+      'Biskra': [34.8500, 5.7333],
+      'Oran': [35.6976, -0.6337],
+      'Tlemcen': [34.8783, -1.3150],
+      'Sidi Bel Abbès': [35.1878, -0.6308],
+      'Mostaganem': [35.9314, 0.0894],
+      'Mascara': [35.3964, 0.1411],
+      'Relizane': [35.7372, 0.5556],
+      'Aïn Témouchent': [35.2978, -1.1408],
+      'Tiaret': [35.3705, 1.3170],
+      'Chlef': [36.1656, 1.3344],
+      'Saïda': [34.8303, 0.1517],
+      'Ghardaïa': [32.4847, 3.6736],
+      'El Oued': [33.3683, 6.8675],
+      'Béchar': [31.6177, -2.2167]
     };
 
     function selectRole(role) {
