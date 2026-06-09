@@ -146,6 +146,26 @@
       setTimeout(() => toast.remove(), 3500);
     }
 
+    async function enrichBookingsWithNames(bookings) {
+      const missingClientIds = [...new Set(bookings.filter(b => !b.client_name && b.client_id).map(b => b.client_id))];
+      if (missingClientIds.length === 0) return bookings;
+
+      const { data: clients } = await db.from('users').select('id, name').in('id', missingClientIds);
+      const clientMap = Object.fromEntries((clients || []).map(c => [c.id, c.name]));
+
+      const updates = [];
+      bookings.forEach(b => {
+        if (!b.client_name && clientMap[b.client_id]) {
+          b.client_name = clientMap[b.client_id];
+          updates.push(db.from('bookings').update({ client_name: clientMap[b.client_id] }).eq('id', b.id));
+        }
+      });
+      if (updates.length > 0) {
+        Promise.all(updates).catch(err => console.error('Auto-repair client_name:', err));
+      }
+      return bookings;
+    }
+
     async function init() {
       currentUser = await requireAuth();
       if (!currentUser) return;
@@ -189,6 +209,8 @@
       cachedBookings = bookingsRes.data || [];
       cachedReviews = reviewsRes.data || [];
 
+      await enrichBookingsWithNames(cachedBookings);
+
       renderDashboard();
 
       db.channel('pro-bookings')
@@ -196,6 +218,7 @@
           async () => {
             const { data } = await db.from('bookings').select('*').eq('professional_id', proData.id).order('created_at', { ascending: false });
             cachedBookings = data || [];
+            await enrichBookingsWithNames(cachedBookings);
             if (currentTab === 'dashboard') renderDashboard();
             if (currentTab === 'requests') renderRequests();
           })
