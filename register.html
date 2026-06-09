@@ -56,6 +56,37 @@
     .password-strength.show { display: block; }
     .match-ok { color: var(--green); }
     .match-error { color: var(--red); }
+    .success-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .success-overlay.show { display: flex; }
+    .success-box {
+      background: var(--bg-card);
+      border: 1px solid var(--green);
+      border-radius: 24px;
+      padding: 48px;
+      text-align: center;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(16, 185, 129, 0.3);
+    }
+    .success-icon {
+      font-size: 80px;
+      color: var(--green);
+      margin-bottom: 20px;
+      animation: bounceIn 0.5s ease-out;
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0); }
+      60% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -217,6 +248,11 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label">Brève description (optionnel)</label>
+            <textarea id="bio" class="form-input" rows="3" placeholder="Décris ton expérience, tes spécialités..."></textarea>
+          </div>
+
+          <div class="form-group">
             <label class="form-label">Possèdes-tu un véhicule ?</label>
             <label class="vehicle-toggle" id="vehicleToggle">
               <input type="checkbox" id="hasVehicle" onchange="toggleVehicle()">
@@ -233,6 +269,14 @@
       <div class="auth-footer">
         Déjà un compte ? <a href="login.html">Se connecter</a>
       </div>
+    </div>
+  </div>
+
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-box">
+      <i class="fa-solid fa-circle-check success-icon"></i>
+      <h2 style="font-size: 24px; margin-bottom: 12px;">Compte créé avec succès !</h2>
+      <p style="color: var(--text-secondary);">Redirection en cours...</p>
     </div>
   </div>
 
@@ -345,33 +389,45 @@
       text.innerHTML = loading ? '<div class="spinner"></div>' : 'Créer mon compte';
     }
 
+    function showSuccessAndRedirect(redirectUrl) {
+      document.getElementById('successOverlay').classList.add('show');
+      setTimeout(() => { window.location.href = redirectUrl; }, 1500);
+    }
+
+    async function waitForSession(maxAttempts = 5) {
+      for (let i = 0; i < maxAttempts; i++) {
+        const { data: { session } } = await db.auth.getSession();
+        if (session && session.user) return session;
+        await new Promise(r => setTimeout(r, 300));
+      }
+      return null;
+    }
+
     async function handleRegister(e) {
       e.preventDefault();
       document.getElementById('errorMsg').classList.remove('show');
 
       const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
+      const email = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value.trim();
       const confirmPassword = document.getElementById('confirmPassword').value.trim();
 
-      if (password !== confirmPassword) {
-        return showError("Les mots de passe ne correspondent pas");
-      }
-
-      if (password.length < 6) {
-        return showError("Le mot de passe doit faire au moins 6 caractères");
-      }
+      if (!name) return showError("Entre ton nom complet");
+      if (password !== confirmPassword) return showError("Les mots de passe ne correspondent pas");
+      if (password.length < 6) return showError("Le mot de passe doit faire au moins 6 caractères");
 
       let selectedJobs = [];
       let city = '';
       let price = null;
       let hasVehicle = false;
+      let bio = '';
 
       if (selectedRole === 'professional') {
         selectedJobs = Array.from(document.querySelectorAll('#jobsGrid input:checked')).map(cb => cb.value);
         city = document.getElementById('city').value;
         price = parseFloat(document.getElementById('price').value) || null;
         hasVehicle = document.getElementById('hasVehicle').checked;
+        bio = document.getElementById('bio').value.trim();
         if (selectedJobs.length === 0) return showError("Coche au moins un métier");
         if (!city) return showError("Sélectionne ta ville");
       }
@@ -379,7 +435,17 @@
       setLoading(true);
 
       try {
-        const { data, error } = await db.auth.signUp({ email, password });
+        const { data: existing } = await db.from('users').select('id').eq('email', email).maybeSingle();
+        if (existing) {
+          setLoading(false);
+          return showError("Cet email possède déjà un compte");
+        }
+
+        const { data, error } = await db.auth.signUp({ 
+          email, 
+          password,
+          options: { data: { name, role: selectedRole } }
+        });
         if (error) throw error;
         if (!data.user) throw new Error("Création échouée");
 
@@ -407,6 +473,7 @@
             longitude: coords[1],
             price_per_hour: price,
             has_vehicle: hasVehicle,
+            bio: bio || null,
             rating: 0,
             review_count: 0,
             is_available: true,
@@ -422,16 +489,31 @@
           }
         }
 
-        await db.auth.signInWithPassword({ email, password });
+        const { error: signInError } = await db.auth.signInWithPassword({ email, password });
+        if (signInError) {
+          console.warn('SignIn auto échoué:', signInError);
+          showSuccessAndRedirect('login.html');
+          return;
+        }
+
+        const session = await waitForSession();
+        if (!session) {
+          showSuccessAndRedirect('login.html');
+          return;
+        }
 
         if (selectedRole === 'professional') {
-          window.location.href = 'pro-dashboard.html';
+          showSuccessAndRedirect('pro-dashboard.html');
         } else {
-          window.location.href = 'index.html';
+          showSuccessAndRedirect('index.html');
         }
       } catch (err) {
-        if (err.message?.includes('already')) showError("Email déjà utilisé");
-        else showError("Erreur : " + err.message);
+        const msg = err.message || '';
+        if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('duplicate')) {
+          showError("Cet email possède déjà un compte");
+        } else {
+          showError("Erreur : " + msg);
+        }
         setLoading(false);
       }
     }
