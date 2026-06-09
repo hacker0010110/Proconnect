@@ -12,6 +12,7 @@
       display: flex; gap: 8px; margin-bottom: 24px;
       background: var(--bg-card); padding: 6px; border-radius: 12px;
       border: 1px solid var(--border); width: fit-content;
+      flex-wrap: wrap;
     }
     .pro-tab {
       padding: 10px 20px; border-radius: 8px; cursor: pointer;
@@ -25,6 +26,10 @@
     }
     .btn-confirm { background: var(--green); color: white; }
     .btn-reject { background: transparent; border: 1px solid var(--red); color: var(--red); }
+    .btn-disabled {
+      background: var(--bg-surface); color: var(--text-muted);
+      cursor: not-allowed; opacity: 0.6;
+    }
     .status-badge {
       display: inline-flex; padding: 4px 12px; border-radius: 100px;
       font-size: 12px; font-weight: 600;
@@ -83,7 +88,6 @@
     }
     .trend-up { color: var(--green); }
     .trend-down { color: var(--red); }
-    
     .charts-grid {
       display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
       margin-bottom: 24px;
@@ -101,12 +105,34 @@
       position: relative;
       height: 280px;
     }
-
     .quick-load { animation: fadeIn 0.3s ease-out; }
+
+    .profile-form {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 32px; max-width: 700px; margin: 0 auto;
+    }
+    .form-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      margin-bottom: 18px;
+    }
+    .toast-success {
+      position: fixed; bottom: 30px; right: 30px;
+      background: var(--green); color: white;
+      padding: 16px 24px; border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+      z-index: 9999; animation: slideInRight 0.3s ease-out;
+      display: flex; align-items: center; gap: 12px;
+      font-weight: 600;
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
 
     @media (max-width: 968px) {
       .charts-grid { grid-template-columns: 1fr; }
       .stats-grid-pro { grid-template-columns: 1fr 1fr; }
+      .form-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -126,6 +152,7 @@
     <div class="pro-tabs" id="proTabs">
       <div class="pro-tab active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</div>
       <div class="pro-tab" data-tab="requests" onclick="switchTab('requests')">🔔 Demandes</div>
+      <div class="pro-tab" data-tab="profile" onclick="switchTab('profile')">👤 Mon Profil</div>
       <div class="pro-tab" data-tab="availability" onclick="switchTab('availability')">⚙️ Disponibilité</div>
     </div>
 
@@ -149,12 +176,53 @@
     let cachedBookings = null;
     let cachedReviews = null;
 
+    const cityCoords = {
+      'Tizi Ouzou': [36.7117, 4.0500], 'Aïn El Hammam': [36.5667, 4.3000],
+      'Larbaâ Nath Irathen': [36.6333, 4.2000], 'Beni Yenni': [36.6167, 4.2500],
+      'Azazga': [36.5167, 4.6833], 'Tigzirt': [36.8908, 4.1217],
+      'Azeffoun': [36.8939, 4.4253], 'Bouzeguène': [36.6500, 4.5167],
+      'Boghni': [36.5333, 3.9500], 'Ouadhias': [36.4833, 4.0833],
+      'Béni Douala': [36.6333, 4.0500], 'Draâ Ben Khedda': [36.6500, 4.1500],
+      'Béjaïa': [36.7558, 5.0840], 'Akbou': [36.4567, 4.5419],
+      'Aokas': [36.6383, 5.2503], 'El Kseur': [36.6803, 4.8567],
+      'Sidi Aïch': [36.6111, 4.6889], 'Tazmalt': [36.3667, 4.4167],
+      'Bouira': [36.3736, 3.9019], 'Lakhdaria': [36.5667, 3.6833],
+      "M'Chedallah": [36.3833, 4.3000], 'Aïn Bessem': [36.3000, 3.6667],
+      'Alger': [36.7372, 3.0865], 'Blida': [36.4203, 2.8277],
+      'Boumerdès': [36.7669, 3.4778], 'Bordj Menaiel': [36.4564, 4.1839],
+      'Tipaza': [36.5944, 2.4475], 'Médéa': [36.2654, 2.7539],
+      'Aïn Defla': [36.2647, 1.9678], 'Djelfa': [34.6753, 3.2547],
+      'Constantine': [36.3650, 6.6147], 'Annaba': [36.9000, 7.7667],
+      'Sétif': [36.1900, 5.4133], 'Batna': [35.5559, 6.1741],
+      'El Eulma': [36.1500, 5.6833], 'Bordj Bou Arréridj': [36.0731, 4.7608],
+      'Skikda': [36.8758, 6.9094], 'Souk Ahras': [36.2867, 7.9511],
+      'Guelma': [36.4625, 7.4283], 'Khenchela': [35.4358, 7.1408],
+      'Tébessa': [35.4044, 8.1242], 'Biskra': [34.8500, 5.7333],
+      'Oran': [35.6976, -0.6337], 'Tlemcen': [34.8783, -1.3150],
+      'Sidi Bel Abbès': [35.1878, -0.6308], 'Mostaganem': [35.9314, 0.0894],
+      'Mascara': [35.3964, 0.1411], 'Relizane': [35.7372, 0.5556],
+      'Aïn Témouchent': [35.2978, -1.1408], 'Tiaret': [35.3705, 1.3170],
+      'Chlef': [36.1656, 1.3344], 'Saïda': [34.8303, 0.1517],
+      'Ghardaïa': [32.4847, 3.6736], 'El Oued': [33.3683, 6.8675],
+      'Béchar': [31.6177, -2.2167]
+    };
+
     const statusLabels = {
       pending: { label: '⏳ En attente', class: 'status-pending' },
       confirmed: { label: '✓ Confirmée', class: 'status-confirmed' },
       cancelled: { label: '✗ Refusée', class: 'status-cancelled' },
       completed: { label: '✓ Terminée', class: 'status-completed' },
     };
+
+    function showToast(message) {
+      const existing = document.querySelector('.toast-success');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.className = 'toast-success';
+      toast.innerHTML = `<i class="fa-solid fa-check-circle"></i> ${message}`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3500);
+    }
 
     async function init() {
       currentUser = await requireAuth();
@@ -174,16 +242,9 @@
           <div style="background: var(--bg-card); border: 1px solid var(--orange); border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 24px;">
             <i class="fa-solid fa-triangle-exclamation" style="font-size: 56px; color: var(--orange); margin-bottom: 20px;"></i>
             <h2 style="margin-bottom: 12px; font-size: 24px;">Profil professionnel introuvable</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
-              Ton compte est marqué comme professionnel mais aucun profil pro n'est associé.
-              Cela peut arriver si l'inscription a été interrompue. Contacte l'administrateur ou crée un nouveau compte pro depuis l'inscription.
-            </p>
-            <a href="register.html?role=pro" class="btn btn-primary">
-              <i class="fa-solid fa-user-plus"></i> Créer un compte pro
-            </a>
-            <a href="index.html" class="btn btn-secondary" style="margin-left: 10px;">
-              <i class="fa-solid fa-arrow-left"></i> Accueil
-            </a>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">Contacte l'administrateur ou crée un nouveau compte pro.</p>
+            <a href="register.html?role=pro" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Créer un compte pro</a>
+            <a href="index.html" class="btn btn-secondary" style="margin-left: 10px;"><i class="fa-solid fa-arrow-left"></i> Accueil</a>
           </div>
         `;
         document.getElementById('tabContent').innerHTML = '';
@@ -194,7 +255,7 @@
       renderHeader();
 
       const [bookingsRes, reviewsRes] = await Promise.all([
-        db.from('bookings').select('*').eq('professional_id', proData.id),
+        db.from('bookings').select('*').eq('professional_id', proData.id).order('created_at', { ascending: false }),
         db.from('reviews').select('rating').eq('professional_id', proData.id)
       ]);
 
@@ -206,7 +267,7 @@
       db.channel('pro-bookings')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `professional_id=eq.${proData.id}` },
           async () => {
-            const { data } = await db.from('bookings').select('*').eq('professional_id', proData.id);
+            const { data } = await db.from('bookings').select('*').eq('professional_id', proData.id).order('created_at', { ascending: false });
             cachedBookings = data || [];
             if (currentTab === 'dashboard') renderDashboard();
             if (currentTab === 'requests') renderRequests();
@@ -239,12 +300,12 @@
 
       if (tab === 'dashboard') renderDashboard();
       if (tab === 'requests') renderRequests();
+      if (tab === 'profile') renderProfile();
       if (tab === 'availability') renderAvailability();
     }
 
     function renderDashboard() {
       if (!cachedBookings) return;
-
       const bookings = cachedBookings;
       const reviews = cachedReviews || [];
 
@@ -406,7 +467,8 @@
 
     function renderRequests() {
       const bookings = cachedBookings || [];
-      const sorted = [...bookings].sort((a, b) => new Date(b.date_time) - new Date(a.date_time));
+      const sorted = [...bookings].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      const now = new Date();
 
       document.getElementById('tabContent').innerHTML = `
         <h2 style="font-size: 22px; margin-bottom: 20px;">🔔 Toutes les demandes</h2>
@@ -415,14 +477,17 @@
             <i class="fa-solid fa-bell-slash" style="font-size: 40px; opacity: 0.5; margin-bottom: 16px;"></i>
             <p>Aucune demande pour l'instant</p>
           </div>
-        ` : sorted.map(b => `
+        ` : sorted.map(b => {
+          const bookingDate = new Date(b.date_time);
+          const isPassed = bookingDate <= now;
+          return `
           <div class="request-card quick-load">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
               <div>
                 <h3 style="font-size: 18px;">${b.pro_name}</h3>
                 <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">
-                  <i class="fa-solid fa-calendar"></i> ${new Date(b.date_time).toLocaleDateString('fr-FR')}
-                  <span style="margin-left: 12px;"><i class="fa-solid fa-clock"></i> ${new Date(b.date_time).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</span>
+                  <i class="fa-solid fa-calendar"></i> ${bookingDate.toLocaleDateString('fr-FR')}
+                  <span style="margin-left: 12px;"><i class="fa-solid fa-clock"></i> ${bookingDate.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</span>
                 </p>
               </div>
               <span class="status-badge ${statusLabels[b.status].class}">${statusLabels[b.status].label}</span>
@@ -437,11 +502,70 @@
             ${(b.status === 'pending' || b.status === 'confirmed') ? `
               <a href="chat.html?booking=${b.id}" class="btn btn-secondary btn-block" style="margin-top: 10px;"><i class="fa-solid fa-comments"></i> Discuter avec le client</a>
             ` : ''}
-            ${b.status === 'confirmed' ? `
+            ${b.status === 'confirmed' ? (isPassed ? `
               <button onclick="updateStatus('${b.id}', 'completed')" class="btn btn-primary btn-block" style="margin-top: 10px;"><i class="fa-solid fa-check-double"></i> Marquer comme terminée</button>
-            ` : ''}
+            ` : `
+              <button class="btn btn-disabled btn-block" style="margin-top: 10px;" disabled title="Tu pourras marquer cette prestation comme terminée après la date prévue">
+                <i class="fa-solid fa-lock"></i> Disponible le ${bookingDate.toLocaleDateString('fr-FR')} à ${bookingDate.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}
+              </button>
+            `) : ''}
           </div>
-        `).join('')}
+        `;
+        }).join('')}
+      `;
+    }
+
+    function renderProfile() {
+      const cities = Object.keys(cityCoords).sort();
+      const jobs = [
+        'Plomberie', 'Électricité', 'Ménage', 'Jardinage', 'Peinture',
+        'Informatique', 'Mécanique', 'Maçonnerie', 'Menuiserie', 'Climatisation',
+        'Transport & Livraison', 'Déménagement', 'Coiffure', 'Esthétique', 'Cuisine', 'Vitrerie'
+      ];
+
+      document.getElementById('tabContent').innerHTML = `
+        <div class="profile-form quick-load">
+          <h2 style="font-size: 22px; margin-bottom: 8px;">👤 Mon Profil</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 28px;">Modifie tes informations professionnelles</p>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Métier principal</label>
+              <select id="editJob" class="form-select">
+                ${jobs.map(j => `<option ${j === proData.job ? 'selected' : ''}>${j}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ville</label>
+              <select id="editCity" class="form-select">
+                ${cities.map(c => `<option ${c === proData.city ? 'selected' : ''}>${c}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tarif horaire (DA)</label>
+              <input type="number" id="editPrice" class="form-input" value="${proData.price_per_hour || ''}" placeholder="1500">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Véhicule</label>
+              <select id="editVehicle" class="form-select">
+                <option value="true" ${proData.has_vehicle ? 'selected' : ''}>🚗 Oui, je peux me déplacer</option>
+                <option value="false" ${!proData.has_vehicle ? 'selected' : ''}>❌ Non</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 18px;">
+            <label class="form-label">Description / Bio</label>
+            <textarea id="editBio" class="form-input" rows="4" placeholder="Décris ton expérience, tes spécialités...">${proData.bio || ''}</textarea>
+          </div>
+
+          <button onclick="saveProfile()" class="btn btn-primary btn-block" id="saveBtn">
+            <i class="fa-solid fa-save"></i> Enregistrer les modifications
+          </button>
+        </div>
       `;
     }
 
@@ -466,7 +590,56 @@
       await db.from('bookings').update({ status }).eq('id', id);
       const idx = cachedBookings.findIndex(b => b.id === id);
       if (idx !== -1) cachedBookings[idx].status = status;
+
+      const messages = {
+        'confirmed': 'Demande confirmée',
+        'cancelled': 'Demande refusée',
+        'completed': 'Service terminé avec succès'
+      };
+      showToast(messages[status] || 'Statut mis à jour');
+
+      const booking = cachedBookings.find(b => b.id === id);
+      if (booking && status === 'completed') {
+        await db.from('notifications').insert({
+          user_id: booking.client_id,
+          title: '✓ Prestation terminée',
+          message: `${proData.name} a marqué votre prestation comme terminée. N'oubliez pas de laisser un avis !`,
+          type: 'success',
+          link: 'profile.html'
+        });
+      }
+
       renderRequests();
+    }
+
+    async function saveProfile() {
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Enregistrement...';
+
+      const job = document.getElementById('editJob').value;
+      const city = document.getElementById('editCity').value;
+      const price = parseFloat(document.getElementById('editPrice').value) || null;
+      const hasVehicle = document.getElementById('editVehicle').value === 'true';
+      const bio = document.getElementById('editBio').value.trim();
+      const coords = cityCoords[city] || [proData.latitude, proData.longitude];
+
+      const { error } = await db.from('professionals').update({
+        job, city, price_per_hour: price, has_vehicle: hasVehicle,
+        bio, latitude: coords[0], longitude: coords[1]
+      }).eq('id', proData.id);
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-save"></i> Enregistrer les modifications';
+
+      if (error) {
+        showToast('Erreur lors de la mise à jour');
+        return;
+      }
+
+      Object.assign(proData, { job, city, price_per_hour: price, has_vehicle: hasVehicle, bio, latitude: coords[0], longitude: coords[1] });
+      renderHeader();
+      showToast('Profil mis à jour avec succès');
     }
 
     async function toggleAvailability() {
@@ -474,6 +647,7 @@
       await db.from('professionals').update({ is_available: newVal }).eq('id', proData.id);
       proData.is_available = newVal;
       renderAvailability();
+      showToast(newVal ? 'Tu es maintenant disponible' : 'Tu es maintenant indisponible');
     }
 
     init();
