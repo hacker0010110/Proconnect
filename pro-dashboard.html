@@ -8,132 +8,41 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .pro-tabs {
-      display: flex; gap: 8px; margin-bottom: 24px;
-      background: var(--bg-card); padding: 6px; border-radius: 12px;
-      border: 1px solid var(--border); width: fit-content;
-      flex-wrap: wrap;
-    }
-    .pro-tab {
-      padding: 10px 20px; border-radius: 8px; cursor: pointer;
-      color: var(--text-secondary); font-weight: 600; transition: all 0.2s;
-    }
+    .pro-tabs { display: flex; gap: 8px; margin-bottom: 24px; background: var(--bg-card); padding: 6px; border-radius: 12px; border: 1px solid var(--border); width: fit-content; flex-wrap: wrap; }
+    .pro-tab { padding: 10px 20px; border-radius: 8px; cursor: pointer; color: var(--text-secondary); font-weight: 600; transition: all 0.2s; }
     .pro-tab.active { background: var(--primary); color: white; }
     .pro-tab:not(.active):hover { color: var(--text-primary); }
-    .request-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 16px; padding: 20px; margin-bottom: 14px;
-    }
+    .request-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 14px; }
     .btn-confirm { background: var(--green); color: white; }
     .btn-reject { background: transparent; border: 1px solid var(--red); color: var(--red); }
-    .btn-disabled {
-      background: var(--bg-surface); color: var(--text-muted);
-      cursor: not-allowed; opacity: 0.6;
-    }
-    .status-badge {
-      display: inline-flex; padding: 4px 12px; border-radius: 100px;
-      font-size: 12px; font-weight: 600;
-    }
+    .btn-disabled { background: var(--bg-surface); color: var(--text-muted); cursor: not-allowed; opacity: 0.6; }
+    .status-badge { display: inline-flex; padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; }
     .status-pending { background: rgba(245, 158, 11, 0.15); color: var(--orange); }
     .status-confirmed { background: rgba(16, 185, 129, 0.15); color: var(--green); }
     .status-cancelled { background: rgba(239, 68, 68, 0.15); color: var(--red); }
     .status-completed { background: rgba(59, 130, 246, 0.15); color: #60A5FA; }
-    .availability-toggle {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 24px; padding: 60px 40px; text-align: center;
-      max-width: 500px; margin: 40px auto;
-    }
-    .stats-grid-pro {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;
-    }
-    .stat-card-pro {
-      background: var(--bg-card); border: 1px solid var(--border);
-      padding: 20px; border-radius: 16px;
-      position: relative; overflow: hidden;
-      transition: all 0.3s;
-    }
-    .stat-card-pro:hover {
-      transform: translateY(-4px);
-      border-color: var(--primary);
-    }
-    .stat-card-pro::before {
-      content: '';
-      position: absolute;
-      top: 0; right: 0;
-      width: 80px; height: 80px;
-      border-radius: 50%;
-      background: var(--stat-color);
-      opacity: 0.1;
-      transform: translate(20px, -20px);
-    }
-    .stat-icon-pro {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      background: var(--stat-color);
-      display: flex; align-items: center; justify-content: center;
-      color: white; font-size: 20px;
-      margin-bottom: 12px;
-    }
-    .stat-value-pro {
-      font-size: 28px; font-weight: 800;
-      margin-bottom: 4px;
-    }
-    .stat-label-pro {
-      color: var(--text-secondary); font-size: 13px;
-    }
-    .stat-trend {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-size: 12px; font-weight: 600;
-      margin-top: 8px;
-    }
+    .availability-toggle { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 60px 40px; text-align: center; max-width: 500px; margin: 40px auto; }
+    .stats-grid-pro { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card-pro { background: var(--bg-card); border: 1px solid var(--border); padding: 20px; border-radius: 16px; position: relative; overflow: hidden; transition: all 0.3s; }
+    .stat-card-pro:hover { transform: translateY(-4px); border-color: var(--primary); }
+    .stat-card-pro::before { content: ''; position: absolute; top: 0; right: 0; width: 80px; height: 80px; border-radius: 50%; background: var(--stat-color); opacity: 0.1; transform: translate(20px, -20px); }
+    .stat-icon-pro { width: 44px; height: 44px; border-radius: 12px; background: var(--stat-color); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; margin-bottom: 12px; }
+    .stat-value-pro { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+    .stat-label-pro { color: var(--text-secondary); font-size: 13px; }
+    .stat-trend { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; margin-top: 8px; }
     .trend-up { color: var(--green); }
     .trend-down { color: var(--red); }
-    .charts-grid {
-      display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
-      margin-bottom: 24px;
-    }
-    .chart-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 16px; padding: 24px;
-    }
-    .chart-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 20px;
-    }
+    .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .chart-title { font-size: 16px; font-weight: 700; }
-    .chart-canvas-wrapper {
-      position: relative;
-      height: 280px;
-    }
+    .chart-canvas-wrapper { position: relative; height: 280px; }
     .quick-load { animation: fadeIn 0.3s ease-out; }
-
-    .profile-form {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 16px; padding: 32px; max-width: 700px; margin: 0 auto;
-    }
-    .form-row {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-      margin-bottom: 18px;
-    }
-    .toast-success {
-      position: fixed; bottom: 30px; right: 30px;
-      background: var(--green); color: white;
-      padding: 16px 24px; border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
-      z-index: 9999; animation: slideInRight 0.3s ease-out;
-      display: flex; align-items: center; gap: 12px;
-      font-weight: 600;
-    }
-    @keyframes slideInRight {
-      from { transform: translateX(400px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    @media (max-width: 968px) {
-      .charts-grid { grid-template-columns: 1fr; }
-      .stats-grid-pro { grid-template-columns: 1fr 1fr; }
-      .form-row { grid-template-columns: 1fr; }
-    }
+    .profile-form { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; max-width: 700px; margin: 0 auto; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+    .toast-success { position: fixed; bottom: 30px; right: 30px; background: var(--green); color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4); z-index: 9999; animation: slideInRight 0.3s ease-out; display: flex; align-items: center; gap: 12px; font-weight: 600; }
+    @keyframes slideInRight { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @media (max-width: 968px) { .charts-grid { grid-template-columns: 1fr; } .stats-grid-pro { grid-template-columns: 1fr 1fr; } .form-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -214,12 +123,25 @@
       completed: { label: '✓ Terminée', class: 'status-completed' },
     };
 
-    function showToast(message) {
+    function safeName(name, fallback = 'Utilisateur') {
+      if (!name || typeof name !== 'string') return fallback;
+      const cleaned = name.trim();
+      return cleaned || fallback;
+    }
+
+    function safeInitial(name) {
+      const n = safeName(name, '?');
+      return n[0].toUpperCase();
+    }
+
+    function showToast(message, type = 'success') {
       const existing = document.querySelector('.toast-success');
       if (existing) existing.remove();
       const toast = document.createElement('div');
       toast.className = 'toast-success';
-      toast.innerHTML = `<i class="fa-solid fa-check-circle"></i> ${message}`;
+      const icon = type === 'error' ? 'fa-circle-xmark' : 'fa-check-circle';
+      if (type === 'error') toast.style.background = 'var(--red)';
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 3500);
     }
@@ -229,12 +151,17 @@
       if (!currentUser) return;
 
       if (currentUser.role !== 'professional') {
-        window.location.href = 'index.html';
+        showToast('Cette page est réservée aux professionnels', 'error');
+        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
         return;
       }
 
-      const { data: proRes } = await db.from('professionals')
+      const { data: proRes, error: proError } = await db.from('professionals')
         .select('*').eq('user_id', currentUser.id).maybeSingle();
+
+      if (proError) {
+        console.error('Erreur chargement profil pro:', proError);
+      }
 
       if (!proRes) {
         document.getElementById('proTabs').style.display = 'none';
@@ -276,14 +203,15 @@
     }
 
     function renderHeader() {
+      const firstName = safeName(currentUser.name).split(' ')[0];
       document.getElementById('header').innerHTML = `
         <div class="quick-load" style="display: flex; align-items: center; gap: 20px; margin-bottom: 32px;">
           <div style="width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--cyan)); display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; color: white;">
-            ${currentUser.name[0].toUpperCase()}
+            ${safeInitial(currentUser.name)}
           </div>
           <div>
-            <h1 style="font-size: 28px; font-weight: 800;">Bonjour ${currentUser.name.split(' ')[0]} 👋</h1>
-            <p style="color: var(--text-secondary);">${proData.job} • ${proData.city}</p>
+            <h1 style="font-size: 28px; font-weight: 800;">Bonjour ${firstName} 👋</h1>
+            <p style="color: var(--text-secondary);">${safeName(proData.job, 'Métier non défini')} • ${safeName(proData.city, 'Ville non définie')}</p>
           </div>
         </div>
       `;
@@ -378,7 +306,7 @@
           <div class="request-card">
             <div style="display: flex; justify-content: space-between;">
               <div>
-                <h3>${b.pro_name}</h3>
+                <h3>Demande de ${safeName(b.client_name, 'Client inconnu')}</h3>
                 <p style="color: var(--text-secondary); font-size: 14px;">
                   ${new Date(b.date_time).toLocaleDateString('fr-FR')} à 
                   ${new Date(b.date_time).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}
@@ -480,15 +408,21 @@
         ` : sorted.map(b => {
           const bookingDate = new Date(b.date_time);
           const isPassed = bookingDate <= now;
+          const clientName = safeName(b.client_name, 'Client inconnu');
           return `
           <div class="request-card quick-load">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-              <div>
-                <h3 style="font-size: 18px;">${b.pro_name}</h3>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">
-                  <i class="fa-solid fa-calendar"></i> ${bookingDate.toLocaleDateString('fr-FR')}
-                  <span style="margin-left: 12px;"><i class="fa-solid fa-clock"></i> ${bookingDate.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</span>
-                </p>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--primary)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
+                  ${safeInitial(b.client_name)}
+                </div>
+                <div>
+                  <h3 style="font-size: 17px;">Demande de ${clientName}</h3>
+                  <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">
+                    <i class="fa-solid fa-calendar"></i> ${bookingDate.toLocaleDateString('fr-FR')}
+                    <span style="margin-left: 12px;"><i class="fa-solid fa-clock"></i> ${bookingDate.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</span>
+                  </p>
+                </div>
               </div>
               <span class="status-badge ${statusLabels[b.status].class}">${statusLabels[b.status].label}</span>
             </div>
@@ -500,7 +434,7 @@
               </div>
             ` : ''}
             ${(b.status === 'pending' || b.status === 'confirmed') ? `
-              <a href="chat.html?booking=${b.id}" class="btn btn-secondary btn-block" style="margin-top: 10px;"><i class="fa-solid fa-comments"></i> Discuter avec le client</a>
+              <a href="chat.html?booking=${b.id}" class="btn btn-secondary btn-block" style="margin-top: 10px;"><i class="fa-solid fa-comments"></i> Discuter avec ${clientName}</a>
             ` : ''}
             ${b.status === 'confirmed' ? (isPassed ? `
               <button onclick="updateStatus('${b.id}', 'completed')" class="btn btn-primary btn-block" style="margin-top: 10px;"><i class="fa-solid fa-check-double"></i> Marquer comme terminée</button>
@@ -587,7 +521,26 @@
     }
 
     async function updateStatus(id, status) {
-      await db.from('bookings').update({ status }).eq('id', id);
+      const booking = cachedBookings.find(b => b.id === id);
+      if (!booking) {
+        showToast('Réservation introuvable', 'error');
+        return;
+      }
+
+      if (status === 'completed') {
+        const bookingDate = new Date(booking.date_time);
+        if (bookingDate > new Date()) {
+          showToast('Tu ne peux marquer comme terminée qu\'après la date prévue', 'error');
+          return;
+        }
+      }
+
+      const { error } = await db.from('bookings').update({ status }).eq('id', id);
+      if (error) {
+        showToast('Erreur lors de la mise à jour', 'error');
+        return;
+      }
+
       const idx = cachedBookings.findIndex(b => b.id === id);
       if (idx !== -1) cachedBookings[idx].status = status;
 
@@ -598,12 +551,11 @@
       };
       showToast(messages[status] || 'Statut mis à jour');
 
-      const booking = cachedBookings.find(b => b.id === id);
-      if (booking && status === 'completed') {
+      if (status === 'completed' && booking.client_id) {
         await db.from('notifications').insert({
           user_id: booking.client_id,
           title: '✓ Prestation terminée',
-          message: `${proData.name} a marqué votre prestation comme terminée. N'oubliez pas de laisser un avis !`,
+          message: `${safeName(proData.name, 'Le professionnel')} a marqué votre prestation comme terminée. N'oubliez pas de laisser un avis !`,
           type: 'success',
           link: 'profile.html'
         });
@@ -633,7 +585,7 @@
       btn.innerHTML = '<i class="fa-solid fa-save"></i> Enregistrer les modifications';
 
       if (error) {
-        showToast('Erreur lors de la mise à jour');
+        showToast('Erreur lors de la mise à jour', 'error');
         return;
       }
 
@@ -644,7 +596,11 @@
 
     async function toggleAvailability() {
       const newVal = !proData.is_available;
-      await db.from('professionals').update({ is_available: newVal }).eq('id', proData.id);
+      const { error } = await db.from('professionals').update({ is_available: newVal }).eq('id', proData.id);
+      if (error) {
+        showToast('Erreur lors de la mise à jour', 'error');
+        return;
+      }
       proData.is_available = newVal;
       renderAvailability();
       showToast(newVal ? 'Tu es maintenant disponible' : 'Tu es maintenant indisponible');
