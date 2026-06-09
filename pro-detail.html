@@ -20,6 +20,7 @@
     .review-card { background: var(--bg-surface); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
     .review-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
     .stars { color: var(--orange); }
+    .empty-bio { color: var(--text-muted); font-style: italic; text-align: center; padding: 12px; }
   </style>
 </head>
 <body>
@@ -29,6 +30,9 @@
       </nav>
 
   <main class="main">
+    <a href="javascript:history.back()" class="back-link">
+      <i class="fa-solid fa-arrow-left"></i> Retour
+    </a>
     <div id="content">Chargement...</div>
   </main>
 
@@ -37,32 +41,52 @@
   <script src="js/navbar.js"></script>
   <script src="js/realtime-notifs.js"></script>
   <script>
+    function safeName(name, fallback = 'Professionnel') {
+      if (!name || typeof name !== 'string') return fallback;
+      const cleaned = name.trim();
+      return cleaned || fallback;
+    }
+    function safeInitial(name) {
+      const n = safeName(name, '?');
+      return n[0].toUpperCase();
+    }
+
     async function loadPro() {
       const id = new URLSearchParams(window.location.search).get('id');
       if (!id) { window.location.href = 'professionals.html'; return; }
 
-      const { data: pro } = await db.from('professionals').select('*').eq('id', id).single();
-      if (!pro) { document.getElementById('content').innerHTML = 'Pro introuvable'; return; }
+      const { data: pro, error } = await db.from('professionals').select('*').eq('id', id).maybeSingle();
+      if (error || !pro) {
+        document.getElementById('content').innerHTML = `
+          <div style="text-align: center; padding: 60px; color: var(--text-muted);">
+            <i class="fa-solid fa-user-slash" style="font-size: 56px; margin-bottom: 16px; opacity: 0.5;"></i>
+            <h2>Professionnel introuvable</h2>
+            <a href="professionals.html" class="btn btn-primary" style="margin-top: 20px;">Voir tous les pros</a>
+          </div>
+        `;
+        return;
+      }
 
       const { data: reviews } = await db.from('reviews').select('*').eq('professional_id', id).order('created_at', { ascending: false });
 
       const stars = (n) => '★'.repeat(Math.floor(n)) + '☆'.repeat(5 - Math.floor(n));
+      const proName = safeName(pro.name);
+      const bioText = (pro.bio && pro.bio.trim()) || (pro.description && pro.description.trim()) || '';
 
       document.getElementById('content').innerHTML = `
-    
-        
         <div class="pro-detail-header fade-in">
-          <div class="pro-detail-avatar">${pro.name[0].toUpperCase()}</div>
+          <div class="pro-detail-avatar">${safeInitial(pro.name)}</div>
           <div class="pro-detail-info">
-            <h1 class="pro-detail-name">${pro.name}</h1>
+            <h1 class="pro-detail-name">${proName}</h1>
             <div class="pro-detail-meta">
-              <span><i class="fa-solid fa-briefcase"></i> ${pro.job}</span>
-              <span><i class="fa-solid fa-location-dot"></i> ${pro.city}</span>
+              <span><i class="fa-solid fa-briefcase"></i> ${safeName(pro.job, 'Métier non défini')}</span>
+              <span><i class="fa-solid fa-location-dot"></i> ${safeName(pro.city, 'Ville non définie')}</span>
+              ${pro.has_vehicle ? `<span><i class="fa-solid fa-car"></i> Véhicule</span>` : ''}
               ${pro.years_experience ? `<span><i class="fa-solid fa-clock"></i> ${pro.years_experience} ans d'expérience</span>` : ''}
             </div>
             <div class="pro-detail-stats">
               <div class="pro-stat">
-                <div class="pro-stat-value">${pro.rating || '0.0'}</div>
+                <div class="pro-stat-value">${pro.rating ? Number(pro.rating).toFixed(1) : '0.0'}</div>
                 <div class="pro-stat-label">⭐ Note</div>
               </div>
               <div class="pro-stat">
@@ -77,17 +101,19 @@
               ` : ''}
             </div>
           </div>
-          <a href="booking.html?id=${pro.id}&name=${encodeURIComponent(pro.name)}&job=${encodeURIComponent(pro.job)}" class="btn btn-primary" style="font-size: 16px; padding: 16px 32px;">
+          <a href="booking.html?id=${pro.id}&name=${encodeURIComponent(proName)}&job=${encodeURIComponent(pro.job || '')}" class="btn btn-primary" style="font-size: 16px; padding: 16px 32px;">
             <i class="fa-solid fa-calendar-plus"></i> Réserver maintenant
           </a>
         </div>
 
-        ${pro.description ? `
-          <div class="section-block">
-            <h2 style="margin-bottom: 12px;">📝 À propos</h2>
-            <p style="color: var(--text-secondary); line-height: 1.7;">${pro.description}</p>
-          </div>
-        ` : ''}
+        <div class="section-block">
+          <h2 style="margin-bottom: 12px;">📝 À propos</h2>
+          ${bioText ? `
+            <p style="color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap;">${bioText}</p>
+          ` : `
+            <p class="empty-bio">Le professionnel n'a pas encore renseigné sa description.</p>
+          `}
+        </div>
 
         ${pro.specialties && pro.specialties.length ? `
           <div class="section-block">
@@ -105,10 +131,10 @@
           ` : reviews.map(r => `
             <div class="review-card">
               <div class="review-header">
-                <strong>${r.client_name}</strong>
+                <strong>${safeName(r.client_name, 'Client')}</strong>
                 <span class="stars">${stars(r.rating)}</span>
               </div>
-              <p style="color: var(--text-secondary); font-size: 14px;">${r.comment}</p>
+              <p style="color: var(--text-secondary); font-size: 14px;">${r.comment || ''}</p>
               <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">${new Date(r.created_at).toLocaleDateString('fr-FR')}</p>
             </div>
           `).join('')}
