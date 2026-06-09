@@ -166,6 +166,36 @@
       return bookings;
     }
 
+    async function autoCancelExpiredBookings() {
+      const now = new Date();
+      const expired = cachedBookings.filter(b => 
+        b.status === 'pending' && new Date(b.date_time) < now
+      );
+      if (expired.length === 0) return;
+
+      const ids = expired.map(b => b.id);
+      const { error } = await db.from('bookings').update({ status: 'cancelled' }).in('id', ids);
+      if (error) {
+        console.error('Erreur auto-cancel:', error);
+        return;
+      }
+
+      expired.forEach(b => {
+        const idx = cachedBookings.findIndex(x => x.id === b.id);
+        if (idx !== -1) cachedBookings[idx].status = 'cancelled';
+
+        if (b.client_id) {
+          db.from('notifications').insert({
+            user_id: b.client_id,
+            title: '⏰ Réservation expirée',
+            message: `Votre réservation avec ${safeName(b.pro_name, 'le professionnel')} n'a pas été confirmée à temps et a été automatiquement annulée.`,
+            type: 'warning',
+            link: 'profile.html'
+          }).then(() => {});
+        }
+      });
+    }
+
     async function init() {
       currentUser = await requireAuth();
       if (!currentUser) return;
@@ -176,12 +206,14 @@
         return;
       }
 
-      const { data: proRes, error: proError } = await db.from('professionals')
-        .select('*').eq('user_id', currentUser.id).maybeSingle();
+      const { data: proResList, error: proError } = await db.from('professionals')
+        .select('*').eq('user_id', currentUser.id);
 
       if (proError) {
         console.error('Erreur chargement profil pro:', proError);
       }
+
+      const proRes = (proResList && proResList.length > 0) ? proResList[0] : null;
 
       if (!proRes) {
         document.getElementById('proTabs').style.display = 'none';
@@ -201,44 +233,17 @@
       proData = proRes;
       renderHeader();
 
+      const proIds = (proResList || []).map(p => p.id);
+
       const [bookingsRes, reviewsRes] = await Promise.all([
-        db.from('bookings').select('*').eq('professional_id', proData.id).order('created_at', { ascending: false }),
-        db.from('reviews').select('rating').eq('professional_id', proData.id)
+        db.from('bookings').select('*').in('professional_id', proIds).order('created_at', { ascending: false }),
+        db.from('reviews').select('rating').in('professional_id', proIds)
       ]);
 
       cachedBookings = bookingsRes.data || [];
       cachedReviews = reviewsRes.data || [];
 
       await enrichBookingsWithNames(cachedBookings);
-      async function autoCancelExpiredBookings() {
-  const now = new Date();
-  const expired = cachedBookings.filter(b => 
-    b.status === 'pending' && new Date(b.date_time) < now
-  );
-  if (expired.length === 0) return;
-
-  const ids = expired.map(b => b.id);
-  const { error } = await db.from('bookings').update({ status: 'cancelled' }).in('id', ids);
-  if (error) {
-    console.error('Erreur auto-cancel:', error);
-    return;
-  }
-
-  expired.forEach(b => {
-    const idx = cachedBookings.findIndex(x => x.id === b.id);
-    if (idx !== -1) cachedBookings[idx].status = 'cancelled';
-
-    if (b.client_id) {
-      db.from('notifications').insert({
-        user_id: b.client_id,
-        title: '⏰ Réservation expirée',
-        message: `Votre réservation avec ${safeName(b.pro_name, 'le professionnel')} n'a pas été confirmée à temps et a été automatiquement annulée.`,
-        type: 'warning',
-        link: 'profile.html'
-      }).then(() => {});
-    }
-  });
-}
       await autoCancelExpiredBookings();
 
       renderDashboard();
@@ -246,7 +251,7 @@
       db.channel('pro-bookings')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `professional_id=eq.${proData.id}` },
           async () => {
-            const { data } = await db.from('bookings').select('*').eq('professional_id', proData.id).order('created_at', { ascending: false });
+            const { data } = await db.from('bookings').select('*').in('professional_id', proIds).order('created_at', { ascending: false });
             cachedBookings = data || [];
             await enrichBookingsWithNames(cachedBookings);
             if (currentTab === 'dashboard') renderDashboard();
