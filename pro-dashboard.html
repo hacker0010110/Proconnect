@@ -210,6 +210,36 @@
       cachedReviews = reviewsRes.data || [];
 
       await enrichBookingsWithNames(cachedBookings);
+      async function autoCancelExpiredBookings() {
+  const now = new Date();
+  const expired = cachedBookings.filter(b => 
+    b.status === 'pending' && new Date(b.date_time) < now
+  );
+  if (expired.length === 0) return;
+
+  const ids = expired.map(b => b.id);
+  const { error } = await db.from('bookings').update({ status: 'cancelled' }).in('id', ids);
+  if (error) {
+    console.error('Erreur auto-cancel:', error);
+    return;
+  }
+
+  expired.forEach(b => {
+    const idx = cachedBookings.findIndex(x => x.id === b.id);
+    if (idx !== -1) cachedBookings[idx].status = 'cancelled';
+
+    if (b.client_id) {
+      db.from('notifications').insert({
+        user_id: b.client_id,
+        title: '⏰ Réservation expirée',
+        message: `Votre réservation avec ${safeName(b.pro_name, 'le professionnel')} n'a pas été confirmée à temps et a été automatiquement annulée.`,
+        type: 'warning',
+        link: 'profile.html'
+      }).then(() => {});
+    }
+  });
+}
+      await autoCancelExpiredBookings();
 
       renderDashboard();
 
