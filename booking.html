@@ -72,6 +72,19 @@
       transition: all 0.2s; font-size: 14px;
     }
     .back-btn:hover { background: var(--bg-card); color: var(--text-primary); }
+    .toast-error {
+      position: fixed; bottom: 30px; right: 30px;
+      background: var(--red); color: white;
+      padding: 16px 24px; border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+      z-index: 9999; animation: slideInRight 0.3s ease-out;
+      display: flex; align-items: center; gap: 12px;
+      font-weight: 600;
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -134,8 +147,8 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const proId = params.get('id');
-    const proName = params.get('name');
-    const proJob = params.get('job');
+    const proName = params.get('name') || 'Professionnel';
+    const proJob = params.get('job') || '';
 
     let selectedDuration = 2;
     let selectedHour = null;
@@ -144,6 +157,22 @@
     document.getElementById('proInfo').innerHTML = 
       `Avec <strong style="color: var(--primary-light)">${proName}</strong> — ${proJob}`;
     document.getElementById('date').min = new Date().toISOString().split('T')[0];
+
+    function showError(msg) {
+      const err = document.getElementById('errorMsg');
+      err.textContent = msg;
+      err.classList.add('show');
+    }
+
+    function showToastError(msg) {
+      const existing = document.querySelector('.toast-error');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.className = 'toast-error';
+      toast.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
 
     function setDuration(hours) {
       selectedDuration = hours;
@@ -156,7 +185,6 @@
       const date = document.getElementById('date').value;
       if (!date) return;
 
-      // Récupère les créneaux occupés
       const startOfDay = `${date}T00:00:00`;
       const endOfDay = `${date}T23:59:59`;
       
@@ -168,7 +196,6 @@
 
       occupiedSlots = slots || [];
 
-      // Affiche les créneaux de 8h à 20h
       const container = document.getElementById('timeSlots');
       let html = '';
       for (let h = 8; h <= 20 - selectedDuration; h++) {
@@ -181,7 +208,6 @@
           return (startTime < sEnd && endTime > sStart);
         });
 
-        // Heure dans le passé ?
         const isPast = startTime < new Date();
 
         html += `
@@ -229,6 +255,11 @@
         return;
       }
 
+      if (user.role !== 'client') {
+        showToastError("Seuls les clients peuvent réserver un service");
+        return;
+      }
+
       const date = document.getElementById('date').value;
       const note = document.getElementById('note').value.trim();
       const startTime = `${date}T${String(selectedHour).padStart(2,'0')}:00:00`;
@@ -239,9 +270,31 @@
       document.getElementById('btnText').innerHTML = '<div class="spinner"></div>';
 
       try {
-        // Crée la réservation
+        const { data: recheckSlots } = await db.from('time_slots')
+          .select('*')
+          .eq('professional_id', proId)
+          .gte('start_time', `${date}T00:00:00`)
+          .lte('end_time', `${date}T23:59:59`);
+
+        const conflict = (recheckSlots || []).some(s => {
+          const sStart = new Date(s.start_time);
+          const sEnd = new Date(s.end_time);
+          return (new Date(startTime) < sEnd && new Date(endTime) > sStart);
+        });
+
+        if (conflict) {
+          showToastError("Ce créneau est déjà pris, choisis-en un autre");
+          btn.disabled = false;
+          document.getElementById('btnText').textContent = 'Confirmer la réservation';
+          await loadAvailableSlots();
+          return;
+        }
+
+        const clientName = (user.name && user.name.trim()) || user.email || 'Client';
+
         const { data: booking, error } = await db.from('bookings').insert({
           client_id: user.id,
+          client_name: clientName,
           professional_id: proId,
           pro_name: proName,
           job: proJob,
@@ -252,7 +305,6 @@
 
         if (error) throw error;
 
-        // Crée le créneau occupé
         await db.from('time_slots').insert({
           professional_id: proId,
           booking_id: booking.id,
@@ -260,24 +312,22 @@
           end_time: endTime
         });
 
-        // Notifie le pro
         const { data: pro } = await db.from('professionals')
           .select('user_id').eq('id', proId).single();
         if (pro) {
           await db.from('notifications').insert({
             user_id: pro.user_id,
             title: '📅 Nouvelle réservation',
-            message: `${user.name} a réservé un créneau le ${new Date(startTime).toLocaleDateString('fr-FR')}`,
+            message: `${clientName} a réservé un créneau le ${new Date(startTime).toLocaleDateString('fr-FR')}`,
             type: 'booking',
             link: 'pro-dashboard.html'
           });
         }
 
-        alert('✅ Réservation confirmée !');
+        alert('✅ Réservation enregistrée !');
         window.location.href = 'profile.html';
       } catch (err) {
-        document.getElementById('errorMsg').textContent = "Erreur : " + err.message;
-        document.getElementById('errorMsg').classList.add('show');
+        showError("Erreur : " + err.message);
         btn.disabled = false;
         document.getElementById('btnText').textContent = 'Confirmer la réservation';
       }
